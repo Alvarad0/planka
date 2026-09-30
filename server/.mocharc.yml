@@ -1,0 +1,3 @@
+# The core `watcher` hook starts a setInterval that is never cleared on sails.lower(),
+# which keeps the process alive after tests finish. Force exit instead of patching core.
+exit: true
