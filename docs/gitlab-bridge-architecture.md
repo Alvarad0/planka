@@ -300,7 +300,10 @@ server/
   api/helpers/gitlab/                        # application services (use cases)
     create-issue-for-card.js, create-branch-for-card.js, sync-card.js, ...
     webhooks/handle-push.js, handle-merge-request.js, handle-pipeline.js, handle-issue.js
-  api/helpers/gitlab-client/                 # driven adapter: the ONLY code that talks HTTP to GitLab
+  utils/gitlab-client.js                     # driven adapter: the ONLY code that talks HTTP to GitLab
+                                             # (plain module, not a Sails helper: dependencies are
+                                             #  injected, so it is unit-tested without lifting Sails)
+  utils/gitlab-url.js                        # GITLAB_URL validation/normalization
   api/models/GitlabIntegration.js, GitlabCardLink.js, GitlabWebhookDelivery.js, CardRelationship.js
   api/hooks/query-methods/models/<same>.js   # Model.qm, following the existing pattern
   api/hooks/gitlab-sync/index.js             # periodic reconciliation
