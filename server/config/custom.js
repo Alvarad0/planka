@@ -14,6 +14,7 @@ const bytes = require('bytes');
 const sails = require('sails');
 
 const version = require('../version');
+const { normalizeGitlabUrl } = require('../utils/gitlab-url');
 
 const envToNumber = (value) => {
   if (!value) {
@@ -84,6 +85,11 @@ module.exports.custom = {
   smtpFrom: process.env.SMTP_FROM,
 
   gravatarBaseUrl: process.env.GRAVATAR_BASE_URL,
+
+  // GitLab Bridge. The token must never be presented to clients or written to logs.
+  gitlabUrl: normalizeGitlabUrl(process.env.GITLAB_URL),
+  gitlabToken: process.env.GITLAB_TOKEN && process.env.GITLAB_TOKEN.trim(),
+  gitlabSyncInterval: envToNumber(process.env.GITLAB_SYNC_INTERVAL) || 10, // In minutes
 
   /* Internal */
 

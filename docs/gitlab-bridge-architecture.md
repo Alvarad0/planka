@@ -11,7 +11,7 @@
 | Where does the Bridge live? | **Inside the Planka backend (Sails) as an isolated module**, plus a new section in the React client. A fork is unavoidable because the card UI must change. |
 | Source of truth | GitLab for code/MR/pipeline/issue. Planka stores **only the mapping** plus a small status snapshot for failure isolation. |
 | GitLab auth (MVP) | One **service token** (group/project access token) from env/Docker secret. **No tokens in the DB.** |
-| Webhook auth | Public route + `X-Gitlab-Token` checked in constant time against a **hashed** per-integration secret. Idempotency via `X-Gitlab-Event-UUID`. |
+| Webhook auth | Public route + `X-Gitlab-Token` checked in constant time against a **hashed** per-integration secret. Idempotency via `Idempotency-Key` (fallback `X-Gitlab-Event-UUID`). Target GitLab: **17.5**. |
 | Relationships | **Nothing equivalent exists** except `Task.linkedCardId`. Reuse it for subtasks; add a new `card_relationship` table for dependencies/related. |
 | "Completed" | Driven by **list type `closed`** (already sets `card.isClosed`). Target lists are configured by ID, never by name. |
 | Biggest risks | No test infrastructure, no job queue, no encryption-at-rest helper, fork maintenance cost. |
@@ -139,7 +139,7 @@ Conventions to follow: singular snake_case table names, `bigInteger('id').primar
 | Column | Type | Notes |
 |---|---|---|
 | `id` | bigint | |
-| `event_uuid` | text, **unique** | `X-Gitlab-Event-UUID` |
+| `event_uuid` | text, **unique** | `Idempotency-Key` (GitLab ≥ 17.4, stable across retries); fallback `X-Gitlab-Event-UUID` |
 | `gitlab_integration_id` | bigint FK | |
 | `event_type` | text | `push`, `merge_request`, `pipeline`, `issue` |
 | `status` | text | `received` / `processed` / `ignored` / `failed` |
@@ -232,7 +232,7 @@ Why respond first: GitLab auto-disables webhooks that time out or fail repeatedl
 - Sync hook: every N minutes (env `GITLAB_SYNC_INTERVAL`) it processes linked cards whose `last_synced_at` is older than a threshold, in batches. It takes a Postgres advisory lock so that only one process syncs if Planka is ever scaled horizontally.
 - Manual repair: `POST /api/cards/:id/gitlab-sync` and `POST /api/gitlab-integrations/:id/sync`.
 
-> Verify on the target GitLab version whether HMAC **signing tokens** are available for webhooks. If yes, prefer them over `X-Gitlab-Token`. The design above works on any version.
+> **Target GitLab 17.5.** HMAC signing tokens (`webhook-signature`) only exist from GitLab 19.0, so `X-Gitlab-Token` is the only option. GitLab disables a webhook temporarily after 4 consecutive failures and permanently after 40, which is why step 5 responds before processing. After upgrading GitLab to ≥ 19.0, switch to signing tokens.
 
 ---
 
@@ -354,7 +354,7 @@ Rules:
 | D1 | Subtasks: reuse `Task.linkedCardId` (proposed) vs new `parent` relation type | Design | Reuse gives "3 / 5 completed" for free and follows Rule 2 |
 | D2 | One GitLab project per Planka project (proposed) vs per board | Design | Per project matches the brief; per board could come later |
 | D3 | Cross-board relationships allowed within the same project? | Design | Proposed: yes, same project only |
-| D4 | Does the target GitLab version support webhook signing tokens? | Security | Check the GitLab version in Phase 1 |
+| D4 | ~~Webhook signing tokens?~~ **Resolved:** GitLab 17.5 has none (19.0+). Use `X-Gitlab-Token` + `Idempotency-Key` | Security | Revisit when GitLab ≥ 19.0 |
 
 ---
 

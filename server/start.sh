@@ -133,6 +133,7 @@ load_secret SECRET_KEY
 load_secret DEFAULT_ADMIN_PASSWORD
 load_secret S3_SECRET_ACCESS_KEY
 load_secret SMTP_PASSWORD
+load_secret GITLAB_TOKEN
 
 start_outgoing_proxy_if_needed
 
