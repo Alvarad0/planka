@@ -45,24 +45,16 @@ module.exports = {
      *
      */
 
+    // Query methods rely on raw SQL and the next_id() function, so tests must run on PostgreSQL.
+    // The schema is reset and migrated in test/lifecycle.test.js.
     default: {
-      adapter: 'sails-disk',
-
-      /**
-       *
-       * More adapter-specific options
-       *
-       * > For example, for some hosted PostgreSQL providers (like Heroku), the
-       * > extra `ssl: true` option is mandatory and must be provided.
-       *
-       * More info:
-       * https://sailsjs.com/config/datastores
-       *
-       */
-
-      inMemoryOnly: true,
+      adapter: 'sails-postgresql',
+      url: process.env.TEST_DATABASE_URL,
     },
   },
+
+  // Tests run inside the dev container, where the dev server already listens on 1337.
+  port: process.env.TEST_PORT || 1338,
 
   log: {
     level: 'warn',
