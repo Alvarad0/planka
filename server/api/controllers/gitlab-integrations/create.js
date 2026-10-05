@@ -45,6 +45,7 @@
  *               type: object
  *               required:
  *                 - item
+ *                 - included
  *               properties:
  *                 item:
  *                   allOf:
@@ -59,6 +60,33 @@
  *                           type: string
  *                           description: Secret token to configure in the GitLab webhook (shown only once)
  *                           example: 4ZpQd1L0yYb7Hn2sXw9TcVe3RkMa6UjF8gNqBoCi
+ *                 included:
+ *                   type: object
+ *                   required:
+ *                     - gitlabListOptions
+ *                   properties:
+ *                     gitlabListOptions:
+ *                       type: array
+ *                       description: Active and closed lists of the project, ordered by board and list position
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             example: "1357158568008091265"
+ *                           name:
+ *                             type: string
+ *                             example: Code Review
+ *                           type:
+ *                             type: string
+ *                             enum: [active, closed]
+ *                             example: active
+ *                           boardId:
+ *                             type: string
+ *                             example: "1357158568008091264"
+ *                           boardName:
+ *                             type: string
+ *                             example: Development
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       401:
@@ -192,10 +220,15 @@ module.exports = {
       throw error;
     }
 
+    const gitlabListOptions = await sails.helpers.gitlabIntegrations.getListOptions(project.id);
+
     return {
       item: {
         ...sails.helpers.gitlabIntegrations.presentOne(gitlabIntegration),
         webhookSecret,
+      },
+      included: {
+        gitlabListOptions,
       },
     };
   },

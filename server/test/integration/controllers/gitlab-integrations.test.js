@@ -102,7 +102,7 @@ describe('GitLab integrations (controllers)', () => {
       })
       .reply(status, { name: branchName, web_url: `${GITLAB_URL}/company/erp/-/tree/x` });
 
-  const createIntegration = async () => {
+  const createIntegrationResponse = async () => {
     mockGetProject('company%2Ferp');
 
     const response = await send(api('post', `/api/projects/${project.id}/gitlab-integration`), {
@@ -111,8 +111,10 @@ describe('GitLab integrations (controllers)', () => {
 
     expect(response.status).to.equal(200);
 
-    return response.body.item;
+    return response.body;
   };
+
+  const createIntegration = async () => (await createIntegrationResponse()).item;
 
   before(async () => {
     ['gitlabUrl', 'gitlabToken', 'outgoingProxy'].forEach((key) => {
@@ -205,7 +207,7 @@ describe('GitLab integrations (controllers)', () => {
 
   describe('create', () => {
     it('creates an integration and returns the webhook secret once', async () => {
-      const item = await createIntegration();
+      const { item, included: createdIncluded } = await createIntegrationResponse();
 
       expect(item.projectId).to.equal(project.id);
       expect(item.gitlabProjectId).to.equal(42);
@@ -216,6 +218,10 @@ describe('GitLab integrations (controllers)', () => {
       );
       expect(item.webhookSecret).to.be.a('string').with.lengthOf(40);
       expect(item).to.not.have.property('webhookSecretHash');
+      expect(createdIncluded.gitlabListOptions.map(({ id }) => id)).to.deep.equal([
+        activeList.id,
+        closedList.id,
+      ]);
 
       const stored = await GitlabIntegration.qm.getOneById(item.id);
 
@@ -311,6 +317,60 @@ describe('GitLab integrations (controllers)', () => {
       const response = await send(api('get', `/api/projects/${project.id}/gitlab-integration`));
 
       expect(response.status).to.equal(404);
+    });
+
+    it('includes the active and closed lists of the project as list options', async () => {
+      await createIntegration();
+
+      const board = await Board.qm.getOneById(activeList.boardId);
+
+      const secondBoard = await Board.create({
+        projectId: project.id,
+        position: 131072,
+        name: 'Operations',
+        defaultView: 'kanban',
+        defaultCardType: 'project',
+        limitCardTypesToDefaultOne: false,
+        alwaysDisplayCardCreator: false,
+      }).fetch();
+
+      const secondBoardList = await List.create({
+        boardId: secondBoard.id,
+        type: List.Types.ACTIVE,
+        position: 65536,
+        name: 'Testing',
+      }).fetch();
+
+      await List.create({ boardId: board.id, type: List.Types.ARCHIVE });
+      await List.create({ boardId: board.id, type: List.Types.TRASH });
+      await createProjectWithLists('Other');
+
+      const response = await send(api('get', `/api/projects/${project.id}/gitlab-integration`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.included.gitlabListOptions).to.deep.equal([
+        {
+          id: activeList.id,
+          name: 'Code Review',
+          type: List.Types.ACTIVE,
+          boardId: board.id,
+          boardName: 'Development',
+        },
+        {
+          id: closedList.id,
+          name: 'Done',
+          type: List.Types.CLOSED,
+          boardId: board.id,
+          boardName: 'Development',
+        },
+        {
+          id: secondBoardList.id,
+          name: 'Testing',
+          type: List.Types.ACTIVE,
+          boardId: secondBoard.id,
+          boardName: 'Operations',
+        },
+      ]);
     });
   });
 

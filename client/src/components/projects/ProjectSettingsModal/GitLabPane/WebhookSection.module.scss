@@ -1,0 +1,20 @@
+:global(#app) {
+  .field {
+    margin-bottom: 8px;
+  }
+
+  .message {
+    margin-top: 12px;
+  }
+
+  .secretMessage {
+    margin: 0 0 8px;
+  }
+
+  .text {
+    color: #444444;
+    font-size: 12px;
+    font-weight: bold;
+    padding-bottom: 6px;
+  }
+}

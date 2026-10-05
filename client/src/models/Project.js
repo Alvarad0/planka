@@ -242,6 +242,8 @@ export default class extends BaseModel {
       baseCustomFieldGroupModel.deleteWithRelated();
     });
 
+    this.gitlabIntegrations.delete();
+
     this.boards.toModelArray().forEach((boardModel) => {
       boardModel.deleteWithRelated(soft);
     });

@@ -26,6 +26,7 @@
  *               type: object
  *               required:
  *                 - item
+ *                 - included
  *               properties:
  *                 item:
  *                   allOf:
@@ -36,6 +37,33 @@
  *                           type: string
  *                           description: URL to configure as the GitLab webhook
  *                           example: https://planka.example.com/api/gitlab/webhooks/1357158568008091266
+ *                 included:
+ *                   type: object
+ *                   required:
+ *                     - gitlabListOptions
+ *                   properties:
+ *                     gitlabListOptions:
+ *                       type: array
+ *                       description: Active and closed lists of the project, ordered by board and list position
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             example: "1357158568008091265"
+ *                           name:
+ *                             type: string
+ *                             example: Code Review
+ *                           type:
+ *                             type: string
+ *                             enum: [active, closed]
+ *                             example: active
+ *                           boardId:
+ *                             type: string
+ *                             example: "1357158568008091264"
+ *                           boardName:
+ *                             type: string
+ *                             example: Development
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       401:
@@ -98,8 +126,13 @@ module.exports = {
       throw Errors.GITLAB_INTEGRATION_NOT_FOUND;
     }
 
+    const gitlabListOptions = await sails.helpers.gitlabIntegrations.getListOptions(project.id);
+
     return {
       item: sails.helpers.gitlabIntegrations.presentOne(gitlabIntegration),
+      included: {
+        gitlabListOptions,
+      },
     };
   },
 };

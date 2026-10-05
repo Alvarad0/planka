@@ -9,6 +9,7 @@ import Project from './Project';
 import ProjectManager from './ProjectManager';
 import BackgroundImage from './BackgroundImage';
 import BaseCustomFieldGroup from './BaseCustomFieldGroup';
+import GitlabIntegration from './GitlabIntegration';
 import Board from './Board';
 import BoardMembership from './BoardMembership';
 import Label from './Label';
@@ -32,6 +33,7 @@ export {
   ProjectManager,
   BackgroundImage,
   BaseCustomFieldGroup,
+  GitlabIntegration,
   Board,
   BoardMembership,
   Label,

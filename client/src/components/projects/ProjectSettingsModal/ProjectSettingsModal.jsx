@@ -15,6 +15,7 @@ import GeneralPane from './GeneralPane';
 import ManagersPane from './ManagersPane';
 import BackgroundPane from './BackgroundPane';
 import BaseCustomFieldGroupsPane from './BaseCustomFieldGroupsPane';
+import GitLabPane from './GitLabPane';
 
 import styles from './ProjectSettingsModal.module.scss';
 
@@ -63,6 +64,12 @@ const ProjectSettingsModal = React.memo(() => {
           context: 'title',
         }),
         render: () => <BaseCustomFieldGroupsPane />,
+      },
+      {
+        menuItem: t('common.gitlab', {
+          context: 'title',
+        }),
+        render: () => <GitLabPane />,
       },
     );
   }

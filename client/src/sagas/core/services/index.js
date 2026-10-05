@@ -16,6 +16,7 @@ import projects from './projects';
 import projectManagers from './project-managers';
 import backgroundImages from './background-images';
 import baseCustomFieldGroups from './base-custom-field-groups';
+import gitlabIntegrations from './gitlab-integrations';
 import boards from './boards';
 import boardMemberships from './board-memberships';
 import labels from './labels';
@@ -46,6 +47,7 @@ export default {
   ...projectManagers,
   ...backgroundImages,
   ...baseCustomFieldGroups,
+  ...gitlabIntegrations,
   ...boards,
   ...boardMemberships,
   ...labels,
