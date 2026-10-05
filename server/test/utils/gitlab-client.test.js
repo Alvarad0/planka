@@ -498,4 +498,449 @@ describe('GitLab client', () => {
       await expectGitlabError(client.getIssue(42, 99), ErrorCodes.NOT_FOUND);
     });
   });
+
+  describe('listMergeRequests', () => {
+    const MERGE_REQUESTS_PATH = '/api/v4/projects/42/merge_requests';
+
+    const MERGE_REQUEST_RESPONSE = {
+      id: 5001,
+      iid: 7,
+      title: 'Implement login',
+      state: 'opened',
+      draft: true,
+      web_url: 'https://gitlab.test/company/erp/-/merge_requests/7',
+      source_branch: 'feature/login',
+      target_branch: 'develop',
+      created_at: '2026-10-05T12:00:00.000Z',
+      updated_at: '2026-10-05T13:00:00.000Z',
+      merged_at: null,
+      author: { id: 1 },
+    };
+
+    it('filters by source branch and state, newest first, and presents only the needed fields', async () => {
+      gitlab
+        .intercept({
+          path: MERGE_REQUESTS_PATH,
+          method: 'GET',
+          headers: { 'private-token': TOKEN },
+          query: {
+            source_branch: 'feature/login',
+            state: 'all',
+            order_by: 'created_at',
+            sort: 'desc',
+            per_page: '20',
+          },
+        })
+        .reply(200, [MERGE_REQUEST_RESPONSE]);
+
+      const mergeRequests = await client.listMergeRequests(42, {
+        sourceBranch: 'feature/login',
+        state: 'all',
+      });
+
+      expect(mergeRequests).to.deep.equal([
+        {
+          id: 5001,
+          iid: 7,
+          title: 'Implement login',
+          state: 'opened',
+          draft: true,
+          webUrl: 'https://gitlab.test/company/erp/-/merge_requests/7',
+          sourceBranch: 'feature/login',
+          targetBranch: 'develop',
+          createdAt: '2026-10-05T12:00:00.000Z',
+          updatedAt: '2026-10-05T13:00:00.000Z',
+          mergedAt: null,
+        },
+      ]);
+    });
+
+    it('defaults to all states', async () => {
+      gitlab
+        .intercept({
+          path: MERGE_REQUESTS_PATH,
+          method: 'GET',
+          query: {
+            source_branch: 'x',
+            state: 'all',
+            order_by: 'created_at',
+            sort: 'desc',
+            per_page: '20',
+          },
+        })
+        .reply(200, []);
+
+      expect(await client.listMergeRequests(42, { sourceBranch: 'x' })).to.deep.equal([]);
+    });
+
+    it('maps 404 to gitlabNotFound', async () => {
+      gitlab
+        .intercept({ path: (path) => path.startsWith(MERGE_REQUESTS_PATH), method: 'GET' })
+        .reply(404, { message: '404 Project Not Found' });
+
+      await expectGitlabError(
+        client.listMergeRequests(42, { sourceBranch: 'x' }),
+        ErrorCodes.NOT_FOUND,
+      );
+    });
+
+    it('maps a non-array response to gitlabUnavailable', async () => {
+      gitlab
+        .intercept({ path: (path) => path.startsWith(MERGE_REQUESTS_PATH), method: 'GET' })
+        .reply(200, { message: 'unexpected' });
+
+      await expectGitlabError(
+        client.listMergeRequests(42, { sourceBranch: 'x' }),
+        ErrorCodes.UNAVAILABLE,
+      );
+    });
+
+    it('rejects invalid branches and states without calling GitLab', async () => {
+      await expectGitlabError(client.listMergeRequests(42, {}), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(
+        client.listMergeRequests(42, { sourceBranch: 'bad\nname' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+      await expectGitlabError(
+        client.listMergeRequests(42, { sourceBranch: 'x', state: 'bogus' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+    });
+  });
+
+  describe('createMergeRequest', () => {
+    const MERGE_REQUESTS_PATH = '/api/v4/projects/42/merge_requests';
+
+    const MERGE_REQUEST_RESPONSE = {
+      id: 5001,
+      iid: 7,
+      title: 'Implement login',
+      state: 'opened',
+      draft: false,
+      web_url: 'https://gitlab.test/company/erp/-/merge_requests/7',
+      source_branch: '12-implement-login',
+      target_branch: 'develop',
+      created_at: '2026-10-05T12:00:00.000Z',
+      updated_at: '2026-10-05T12:00:00.000Z',
+      merged_at: null,
+    };
+
+    const mergeRequestValues = {
+      sourceBranch: '12-implement-login',
+      targetBranch: 'develop',
+      title: 'Implement login',
+    };
+
+    it('posts a JSON body and presents only the needed fields', async () => {
+      let sentBody;
+
+      gitlab
+        .intercept({
+          path: MERGE_REQUESTS_PATH,
+          method: 'POST',
+          headers: {
+            'private-token': TOKEN,
+            'content-type': 'application/json',
+          },
+          body: (body) => {
+            sentBody = JSON.parse(body);
+
+            return true;
+          },
+        })
+        .reply(201, MERGE_REQUEST_RESPONSE);
+
+      const mergeRequest = await client.createMergeRequest(42, {
+        ...mergeRequestValues,
+        title: '  Implement login  ',
+        description: 'Closes #12',
+      });
+
+      expect(sentBody).to.deep.equal({
+        source_branch: '12-implement-login',
+        target_branch: 'develop',
+        title: 'Implement login',
+        description: 'Closes #12',
+      });
+
+      expect(mergeRequest).to.deep.equal({
+        id: 5001,
+        iid: 7,
+        title: 'Implement login',
+        state: 'opened',
+        draft: false,
+        webUrl: 'https://gitlab.test/company/erp/-/merge_requests/7',
+        sourceBranch: '12-implement-login',
+        targetBranch: 'develop',
+        createdAt: '2026-10-05T12:00:00.000Z',
+        updatedAt: '2026-10-05T12:00:00.000Z',
+        mergedAt: null,
+      });
+    });
+
+    it('omits a missing description and truncates long titles to 255 characters', async () => {
+      let sentBody;
+
+      gitlab
+        .intercept({
+          path: MERGE_REQUESTS_PATH,
+          method: 'POST',
+          body: (body) => {
+            sentBody = JSON.parse(body);
+
+            return true;
+          },
+        })
+        .reply(201, MERGE_REQUEST_RESPONSE);
+
+      await client.createMergeRequest(42, { ...mergeRequestValues, title: 'a'.repeat(300) });
+
+      expect(sentBody.title).to.equal('a'.repeat(255));
+      expect(sentBody).to.not.have.property('description');
+    });
+
+    it('detects an existing open merge request without exposing the GitLab message', async () => {
+      gitlab.intercept({ path: MERGE_REQUESTS_PATH, method: 'POST' }).reply(409, {
+        message: ['Another open merge request already exists for this source branch: !7'],
+      });
+
+      const error = await expectGitlabError(
+        client.createMergeRequest(42, mergeRequestValues),
+        ErrorCodes.MERGE_REQUEST_ALREADY_EXISTS,
+      );
+
+      expect(error.status).to.equal(409);
+      expect(error.message).to.equal('GitLab merge request already exists');
+    });
+
+    it('detects an existing open merge request from a string message', async () => {
+      gitlab.intercept({ path: MERGE_REQUESTS_PATH, method: 'POST' }).reply(409, {
+        message: 'Another open merge request already exists for this source branch: !7',
+      });
+
+      await expectGitlabError(
+        client.createMergeRequest(42, mergeRequestValues),
+        ErrorCodes.MERGE_REQUEST_ALREADY_EXISTS,
+      );
+    });
+
+    it('maps any other 409 to gitlabRequestFailed', async () => {
+      gitlab.intercept({ path: MERGE_REQUESTS_PATH, method: 'POST' }).reply(409, {
+        message: ["You can't use same project/branch for source and target"],
+      });
+
+      const error = await expectGitlabError(
+        client.createMergeRequest(42, mergeRequestValues),
+        ErrorCodes.REQUEST_FAILED,
+      );
+
+      expect(error.status).to.equal(409);
+    });
+
+    it('maps 404 to gitlabNotFound', async () => {
+      gitlab
+        .intercept({ path: MERGE_REQUESTS_PATH, method: 'POST' })
+        .reply(404, { message: '404 Project Not Found' });
+
+      await expectGitlabError(
+        client.createMergeRequest(42, mergeRequestValues),
+        ErrorCodes.NOT_FOUND,
+      );
+    });
+
+    it('rejects invalid branches and titles without calling GitLab', async () => {
+      await expectGitlabError(
+        client.createMergeRequest(42, { ...mergeRequestValues, sourceBranch: '' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+      await expectGitlabError(
+        client.createMergeRequest(42, { ...mergeRequestValues, targetBranch: 'bad\nref' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+      await expectGitlabError(
+        client.createMergeRequest(42, { ...mergeRequestValues, title: '  ' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+      await expectGitlabError(client.createMergeRequest(42, {}), ErrorCodes.REQUEST_FAILED);
+
+      expect(mockAgent.pendingInterceptors()).to.have.lengthOf(0);
+    });
+  });
+
+  describe('getLatestPipeline', () => {
+    const PIPELINES_PATH = '/api/v4/projects/42/pipelines';
+
+    it('fetches the newest pipeline of a ref and presents only the needed fields', async () => {
+      gitlab
+        .intercept({
+          path: PIPELINES_PATH,
+          method: 'GET',
+          headers: { 'private-token': TOKEN },
+          query: {
+            ref: 'feature/login',
+            order_by: 'id',
+            sort: 'desc',
+            per_page: '1',
+          },
+        })
+        .reply(200, [
+          {
+            id: 287,
+            iid: 144,
+            project_id: 42,
+            status: 'success',
+            source: 'push',
+            ref: 'feature/login',
+            sha: '50f0acb7',
+            web_url: 'https://gitlab.test/company/erp/-/pipelines/287',
+            created_at: '2026-10-05T12:00:00.000Z',
+            updated_at: '2026-10-05T12:05:00.000Z',
+          },
+        ]);
+
+      const pipeline = await client.getLatestPipeline(42, { ref: 'feature/login' });
+
+      expect(pipeline).to.deep.equal({
+        id: 287,
+        status: 'success',
+        ref: 'feature/login',
+        sha: '50f0acb7',
+        webUrl: 'https://gitlab.test/company/erp/-/pipelines/287',
+        createdAt: '2026-10-05T12:00:00.000Z',
+        updatedAt: '2026-10-05T12:05:00.000Z',
+      });
+    });
+
+    it('returns null when the ref has no pipelines', async () => {
+      gitlab
+        .intercept({ path: (path) => path.startsWith(PIPELINES_PATH), method: 'GET' })
+        .reply(200, []);
+
+      expect(await client.getLatestPipeline(42, { ref: 'x' })).to.equal(null);
+    });
+
+    it('maps 403 to gitlabForbidden', async () => {
+      gitlab
+        .intercept({ path: (path) => path.startsWith(PIPELINES_PATH), method: 'GET' })
+        .reply(403, { message: '403 Forbidden' });
+
+      await expectGitlabError(client.getLatestPipeline(42, { ref: 'x' }), ErrorCodes.FORBIDDEN);
+    });
+
+    it('rejects invalid refs without calling GitLab', async () => {
+      await expectGitlabError(client.getLatestPipeline(42, {}), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(
+        client.getLatestPipeline(42, { ref: '..' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+    });
+  });
+
+  describe('listCommits', () => {
+    const COMMITS_PATH = '/api/v4/projects/42/repository/commits';
+
+    const buildCommit = (index) => ({
+      id: `${index}`.repeat(40),
+      short_id: `${index}`.repeat(8),
+      title: `Commit ${index}`,
+      author_name: 'Jane Doe',
+      author_email: 'jane@example.com',
+      created_at: `2026-10-0${index}T12:00:00.000Z`,
+      message: 'not presented',
+      web_url: `https://gitlab.test/company/erp/-/commit/${`${index}`.repeat(40)}`,
+    });
+
+    it('lists the commits of the revision range as returned (newest first)', async () => {
+      gitlab
+        .intercept({
+          path: `${COMMITS_PATH}?ref_name=develop..feature%2Flogin&per_page=100`,
+          method: 'GET',
+          headers: { 'private-token': TOKEN },
+        })
+        .reply(200, [buildCommit(2), buildCommit(1)]);
+
+      const commits = await client.listCommits(42, { from: 'develop', to: 'feature/login' });
+
+      expect(commits).to.deep.equal([
+        {
+          id: '2'.repeat(40),
+          shortId: '2'.repeat(8),
+          title: 'Commit 2',
+          authorName: 'Jane Doe',
+          createdAt: '2026-10-02T12:00:00.000Z',
+          webUrl: `https://gitlab.test/company/erp/-/commit/${'2'.repeat(40)}`,
+        },
+        {
+          id: '1'.repeat(40),
+          shortId: '1'.repeat(8),
+          title: 'Commit 1',
+          authorName: 'Jane Doe',
+          createdAt: '2026-10-01T12:00:00.000Z',
+          webUrl: `https://gitlab.test/company/erp/-/commit/${'1'.repeat(40)}`,
+        },
+      ]);
+    });
+
+    it('requests the given limit, clamped to 1..100', async () => {
+      [
+        [50, '50'],
+        [500, '100'],
+        [0, '1'],
+        [undefined, '100'],
+      ].forEach(([, perPage]) => {
+        gitlab
+          .intercept({
+            path: COMMITS_PATH,
+            method: 'GET',
+            query: { ref_name: 'develop..x', per_page: perPage },
+          })
+          .reply(200, []);
+      });
+
+      await client.listCommits(42, { from: 'develop', to: 'x', limit: 50 });
+      await client.listCommits(42, { from: 'develop', to: 'x', limit: 500 });
+      await client.listCommits(42, { from: 'develop', to: 'x', limit: 0 });
+      await client.listCommits(42, { from: 'develop', to: 'x' });
+
+      expect(mockAgent.pendingInterceptors()).to.have.lengthOf(0);
+    });
+
+    it('returns an empty list when the branch has no new commits', async () => {
+      gitlab
+        .intercept({ path: (path) => path.startsWith(COMMITS_PATH), method: 'GET' })
+        .reply(200, []);
+
+      expect(await client.listCommits(42, { from: 'develop', to: 'x' })).to.deep.equal([]);
+    });
+
+    it('maps 404 to gitlabNotFound', async () => {
+      gitlab
+        .intercept({ path: (path) => path.startsWith(COMMITS_PATH), method: 'GET' })
+        .reply(404, { message: '404 Not Found' });
+
+      await expectGitlabError(
+        client.listCommits(42, { from: 'develop', to: 'deleted' }),
+        ErrorCodes.NOT_FOUND,
+      );
+    });
+
+    it('maps a non-array response to gitlabUnavailable', async () => {
+      gitlab
+        .intercept({ path: (path) => path.startsWith(COMMITS_PATH), method: 'GET' })
+        .reply(200, {});
+
+      await expectGitlabError(
+        client.listCommits(42, { from: 'develop', to: 'x' }),
+        ErrorCodes.UNAVAILABLE,
+      );
+    });
+
+    it('rejects invalid refs without calling GitLab', async () => {
+      await expectGitlabError(client.listCommits(42, { to: 'x' }), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(
+        client.listCommits(42, { from: 'develop', to: 'bad\nref' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+    });
+  });
 });

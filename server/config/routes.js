@@ -164,6 +164,8 @@ module.exports.routes = {
   'POST /api/cards/:id/gitlab-link': 'gitlab-card-links/link-issue',
   'DELETE /api/cards/:id/gitlab-link': 'gitlab-card-links/unlink',
   'POST /api/cards/:id/gitlab-branch': 'gitlab-card-links/create-branch',
+  'POST /api/cards/:id/gitlab-merge-request': 'gitlab-card-links/create-merge-request',
+  'GET /api/cards/:id/gitlab-commits': 'gitlab-card-links/commits',
 
   'POST /api/projects/:projectId/base-custom-field-groups': 'base-custom-field-groups/create',
   'PATCH /api/base-custom-field-groups/:id': 'base-custom-field-groups/update',

@@ -78,6 +78,7 @@
 const { idInput } = require('../../../utils/inputs');
 const { GitlabErrors, gitlabExits, mapGitlabError } = require('../../../utils/gitlab-errors');
 const { buildBranchName } = require('../../../utils/git-branch-name');
+const { buildSnapshot } = require('../../../utils/gitlab-snapshot');
 
 // Upper bound of the integer column storing the IID
 const MAX_ISSUE_IID = 2147483647;
@@ -188,7 +189,7 @@ module.exports = {
           issueId: gitlabIssue.id,
           issueIid: gitlabIssue.iid,
           issueUrl: gitlabIssue.webUrl,
-          snapshot: _.pick(gitlabIssue, ['title', 'state', 'updatedAt']),
+          snapshot: buildSnapshot({ issue: gitlabIssue }),
           lastSyncedAt: new Date().toISOString(),
         },
         request: this.req,

@@ -167,6 +167,120 @@ describe('GitLab card links (controllers)', () => {
       })
       .reply(status, response);
 
+  const BRANCH_NAME = '12-implement-login';
+  const MERGE_REQUESTS_PATH = `/api/v4/projects/${GITLAB_PROJECT_ID}/merge_requests`;
+  const PIPELINES_PATH = `/api/v4/projects/${GITLAB_PROJECT_ID}/pipelines`;
+  const COMMITS_PATH = `/api/v4/projects/${GITLAB_PROJECT_ID}/repository/commits`;
+
+  const buildGitlabMergeRequest = (iid, values = {}) => ({
+    iid,
+    id: 5000 + iid,
+    title: 'Issue 12',
+    state: 'opened',
+    draft: false,
+    web_url: `${GITLAB_URL}/company/erp/-/merge_requests/${iid}`,
+    source_branch: BRANCH_NAME,
+    target_branch: 'main',
+    created_at: '2026-10-05T12:00:00.000Z',
+    updated_at: '2026-10-05T12:00:00.000Z',
+    merged_at: null,
+    ...values,
+  });
+
+  const presentGitlabMergeRequest = (mergeRequest) => ({
+    id: mergeRequest.id,
+    iid: mergeRequest.iid,
+    title: mergeRequest.title,
+    state: mergeRequest.state,
+    draft: mergeRequest.draft,
+    webUrl: mergeRequest.web_url,
+    sourceBranch: mergeRequest.source_branch,
+    targetBranch: mergeRequest.target_branch,
+    createdAt: mergeRequest.created_at,
+    updatedAt: mergeRequest.updated_at,
+    mergedAt: mergeRequest.merged_at,
+  });
+
+  const buildGitlabPipeline = (id, values = {}) => ({
+    id,
+    status: 'success',
+    ref: BRANCH_NAME,
+    sha: 'abc123',
+    web_url: `${GITLAB_URL}/company/erp/-/pipelines/${id}`,
+    created_at: '2026-10-05T12:00:00.000Z',
+    updated_at: '2026-10-05T12:05:00.000Z',
+    ...values,
+  });
+
+  const buildGitlabCommit = (index) => ({
+    id: `${index}`.padStart(40, '0'),
+    short_id: `${index}`.padStart(8, '0'),
+    title: `Commit ${index}`,
+    author_name: 'Jane Doe',
+    author_email: 'jane@example.com',
+    created_at: '2026-10-05T12:00:00.000Z',
+    web_url: `${GITLAB_URL}/company/erp/-/commit/${`${index}`.padStart(40, '0')}`,
+  });
+
+  const mockListMergeRequests = (state, status = 200, response = []) =>
+    gitlab
+      .intercept({
+        path: MERGE_REQUESTS_PATH,
+        method: 'GET',
+        headers: { 'private-token': GITLAB_TOKEN },
+        query: {
+          state,
+          source_branch: BRANCH_NAME,
+          order_by: 'created_at',
+          sort: 'desc',
+          per_page: '20',
+        },
+      })
+      .reply(status, response);
+
+  const mockCreateMergeRequest = (onBody, status = 201, response = buildGitlabMergeRequest(7)) =>
+    gitlab
+      .intercept({
+        path: MERGE_REQUESTS_PATH,
+        method: 'POST',
+        headers: { 'private-token': GITLAB_TOKEN },
+        body: (body) => {
+          onBody(JSON.parse(body));
+
+          return true;
+        },
+      })
+      .reply(status, response);
+
+  const mockLatestPipeline = (status = 200, response = []) =>
+    gitlab
+      .intercept({
+        path: PIPELINES_PATH,
+        method: 'GET',
+        headers: { 'private-token': GITLAB_TOKEN },
+        query: {
+          ref: BRANCH_NAME,
+          order_by: 'id',
+          sort: 'desc',
+          per_page: '1',
+        },
+      })
+      .reply(status, response);
+
+  // Commits of the branch not in the default branch, newest first
+  const mockListCommits = (status = 200, response = [], perPage = '100') =>
+    gitlab
+      .intercept({
+        path: COMMITS_PATH,
+        method: 'GET',
+        headers: { 'private-token': GITLAB_TOKEN },
+        query: {
+          ref_name: `main..${BRANCH_NAME}`,
+          per_page: perPage,
+        },
+      })
+      .reply(status, response);
+
   const createLink = (cardId, values = {}) =>
     GitlabCardLink.qm.createOne({
       cardId,
@@ -246,6 +360,8 @@ describe('GitLab card links (controllers)', () => {
         }),
         await send(api('delete', `/api/cards/${card.id}/gitlab-link`, OUTSIDER_API_KEY)),
         await send(api('post', `/api/cards/${card.id}/gitlab-branch`, OUTSIDER_API_KEY)),
+        await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`, OUTSIDER_API_KEY)),
+        await send(api('get', `/api/cards/${card.id}/gitlab-commits`, OUTSIDER_API_KEY)),
       ];
 
       responses.forEach((response) => {
@@ -262,6 +378,12 @@ describe('GitLab card links (controllers)', () => {
 
       expect(showResponse.status).to.equal(200);
 
+      const commitsResponse = await send(
+        api('get', `/api/cards/${card.id}/gitlab-commits`, VIEWER_API_KEY),
+      );
+
+      expect(commitsResponse.status).to.equal(200);
+
       const responses = [
         await send(api('post', `/api/cards/${card.id}/gitlab-issue`, VIEWER_API_KEY)),
         await send(api('post', `/api/cards/${card.id}/gitlab-link`, VIEWER_API_KEY), {
@@ -269,6 +391,7 @@ describe('GitLab card links (controllers)', () => {
         }),
         await send(api('delete', `/api/cards/${card.id}/gitlab-link`, VIEWER_API_KEY)),
         await send(api('post', `/api/cards/${card.id}/gitlab-branch`, VIEWER_API_KEY)),
+        await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`, VIEWER_API_KEY)),
       ];
 
       responses.forEach((response) => {
@@ -292,6 +415,10 @@ describe('GitLab card links (controllers)', () => {
           gitlabProjectPath: integration.gitlabProjectPath,
         },
         gitlabIssue: null,
+        gitlabMergeRequest: null,
+        gitlabPipeline: null,
+        commitsCount: null,
+        hasMoreCommits: false,
         isStale: false,
         isProjectMismatch: false,
         suggestedBranchName: null,
@@ -308,9 +435,15 @@ describe('GitLab card links (controllers)', () => {
       expect(response.status).to.equal(200);
       expect(response.body.item.id).to.equal(link.id);
       expect(response.body.item.snapshot).to.deep.equal({
-        title: 'Renamed',
-        state: 'closed',
-        updatedAt: '2026-10-05T12:00:00.000Z',
+        issue: {
+          title: 'Renamed',
+          state: 'closed',
+          updatedAt: '2026-10-05T12:00:00.000Z',
+        },
+        mergeRequest: null,
+        pipeline: null,
+        commitsCount: null,
+        hasMoreCommits: false,
       });
       expect(response.body.included.gitlabIssue).to.deep.equal({
         id: 9012,
@@ -325,7 +458,7 @@ describe('GitLab card links (controllers)', () => {
 
       const stored = await GitlabCardLink.qm.getOneById(link.id);
 
-      expect(stored.snapshot.title).to.equal('Renamed');
+      expect(stored.snapshot.issue.title).to.equal('Renamed');
       expect(stored.lastSyncedAt).to.not.equal(null);
     });
 
@@ -347,6 +480,9 @@ describe('GitLab card links (controllers)', () => {
         branchUrl: `${GITLAB_URL}/company/erp/-/tree/12-implement-login`,
       });
       mockGetIssue(12);
+      mockListMergeRequests('all');
+      mockLatestPipeline();
+      mockListCommits();
 
       const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
 
@@ -395,6 +531,229 @@ describe('GitLab card links (controllers)', () => {
       expect(response.body.included.gitlabIssue.title).to.equal('Known title');
     });
 
+    describe('with a branch', () => {
+      const branchValues = {
+        branchName: BRANCH_NAME,
+        branchUrl: `${GITLAB_URL}/company/erp/-/tree/${BRANCH_NAME}`,
+      };
+
+      it('returns the issue, merge request, pipeline and commit count', async () => {
+        const link = await createLink(card.id, branchValues);
+
+        const openedMergeRequest = buildGitlabMergeRequest(8, { draft: true });
+
+        mockGetIssue(12);
+        mockListMergeRequests('all', 200, [
+          buildGitlabMergeRequest(9, { state: 'closed' }),
+          openedMergeRequest,
+          buildGitlabMergeRequest(5, { state: 'merged' }),
+        ]);
+        mockLatestPipeline(200, [buildGitlabPipeline(287, { status: 'running' })]);
+        mockListCommits(200, [buildGitlabCommit(2), buildGitlabCommit(1)]);
+
+        const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+        const gitlabPipeline = {
+          id: 287,
+          status: 'running',
+          ref: BRANCH_NAME,
+          sha: 'abc123',
+          webUrl: `${GITLAB_URL}/company/erp/-/pipelines/287`,
+          createdAt: '2026-10-05T12:00:00.000Z',
+          updatedAt: '2026-10-05T12:05:00.000Z',
+        };
+
+        expect(response.status).to.equal(200);
+        expect(response.body.included.isStale).to.equal(false);
+        expect(response.body.included.gitlabIssue.title).to.equal('Issue 12');
+        expect(response.body.included.gitlabMergeRequest).to.deep.equal(
+          presentGitlabMergeRequest(openedMergeRequest),
+        );
+        expect(response.body.included.gitlabPipeline).to.deep.equal(gitlabPipeline);
+        expect(response.body.included.commitsCount).to.equal(2);
+        expect(response.body.included.hasMoreCommits).to.equal(false);
+        expect(mockAgent.pendingInterceptors()).to.have.lengthOf(0);
+
+        const stored = await GitlabCardLink.qm.getOneById(link.id);
+
+        expect(stored.snapshot).to.deep.equal({
+          issue: {
+            title: 'Issue 12',
+            state: 'opened',
+            updatedAt: '2026-10-05T12:00:00.000Z',
+          },
+          mergeRequest: presentGitlabMergeRequest(openedMergeRequest),
+          pipeline: gitlabPipeline,
+          commitsCount: 2,
+          hasMoreCommits: false,
+        });
+        expect(stored.lastSyncedAt).to.not.equal(null);
+      });
+
+      it('returns the newest merged merge request and no commit count once merged', async () => {
+        await createLink(card.id, branchValues);
+
+        const mergedMergeRequest = buildGitlabMergeRequest(8, {
+          state: 'merged',
+          merged_at: '2026-10-06T12:00:00.000Z',
+        });
+
+        mockGetIssue(12);
+        mockListMergeRequests('all', 200, [
+          buildGitlabMergeRequest(9, { state: 'closed' }),
+          mergedMergeRequest,
+          buildGitlabMergeRequest(5, { state: 'merged' }),
+        ]);
+        mockLatestPipeline(200, [buildGitlabPipeline(287)]);
+        mockListCommits(200, []);
+
+        const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+        expect(response.status).to.equal(200);
+        expect(response.body.included.isStale).to.equal(false);
+        expect(response.body.included.gitlabMergeRequest).to.deep.equal(
+          presentGitlabMergeRequest(mergedMergeRequest),
+        );
+        expect(response.body.included.commitsCount).to.equal(null);
+      });
+
+      it('returns no merge request when the branch has only closed ones', async () => {
+        await createLink(card.id, branchValues);
+
+        mockGetIssue(12);
+        mockListMergeRequests('all', 200, [buildGitlabMergeRequest(9, { state: 'closed' })]);
+        mockLatestPipeline();
+        mockListCommits(200, [buildGitlabCommit(1)]);
+
+        const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+        expect(response.status).to.equal(200);
+        expect(response.body.included.gitlabMergeRequest).to.equal(null);
+        expect(response.body.included.gitlabPipeline).to.equal(null);
+        expect(response.body.included.commitsCount).to.equal(1);
+      });
+
+      it('counts commits up to 100 and flags that there are more', async () => {
+        await createLink(card.id, branchValues);
+
+        mockGetIssue(12);
+        mockListMergeRequests('all');
+        mockLatestPipeline();
+        mockListCommits(
+          200,
+          Array.from({ length: 100 }, (_value, index) => buildGitlabCommit(100 - index)),
+        );
+
+        const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+        expect(response.status).to.equal(200);
+        expect(response.body.included.commitsCount).to.equal(100);
+        expect(response.body.included.hasMoreCommits).to.equal(true);
+        expect(response.body.item.snapshot.hasMoreCommits).to.equal(true);
+      });
+
+      it('treats a branch deleted in GitLab as having no pipeline and commits', async () => {
+        await createLink(card.id, branchValues);
+
+        mockGetIssue(12);
+        mockListMergeRequests('all');
+        mockLatestPipeline(404, { message: '404 Not Found' });
+        mockListCommits(404, { message: '404 Not Found' });
+
+        const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+        expect(response.status).to.equal(200);
+        expect(response.body.included.isStale).to.equal(false);
+        expect(response.body.included.gitlabIssue.title).to.equal('Issue 12');
+        expect(response.body.included.gitlabMergeRequest).to.equal(null);
+        expect(response.body.included.gitlabPipeline).to.equal(null);
+        expect(response.body.included.commitsCount).to.equal(null);
+        expect(response.body.item.lastSyncedAt).to.not.equal(null);
+      });
+
+      it('falls back to the whole snapshot when any GitLab call fails', async () => {
+        const snapshot = {
+          issue: { title: 'Known title', state: 'opened', updatedAt: '2026-10-01T00:00:00.000Z' },
+          mergeRequest: presentGitlabMergeRequest(buildGitlabMergeRequest(8)),
+          pipeline: { id: 1, status: 'failed', ref: BRANCH_NAME },
+          commitsCount: 4,
+          hasMoreCommits: true,
+        };
+
+        const link = await createLink(card.id, {
+          ...branchValues,
+          snapshot,
+          lastSyncedAt: '2026-10-01T00:00:00.000Z',
+        });
+
+        // Everything succeeds except the pipeline lookup
+        mockGetIssue(12, 200, buildGitlabIssue(12, { title: 'Live title' }));
+        mockListMergeRequests('all');
+        mockLatestPipeline(500, { message: 'boom' });
+        mockListCommits(200, []);
+
+        const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+        expect(response.status).to.equal(200);
+        expect(response.body.included.isStale).to.equal(true);
+        expect(response.body.included.gitlabIssue).to.deep.equal({
+          id: 9012,
+          iid: 12,
+          title: 'Known title',
+          state: 'opened',
+          webUrl: `${GITLAB_URL}/company/erp/-/issues/12`,
+          updatedAt: '2026-10-01T00:00:00.000Z',
+        });
+        expect(response.body.included.gitlabMergeRequest).to.deep.equal(snapshot.mergeRequest);
+        expect(response.body.included.gitlabPipeline).to.deep.equal(snapshot.pipeline);
+        expect(response.body.included.commitsCount).to.equal(4);
+        expect(response.body.included.hasMoreCommits).to.equal(true);
+        expect(response.body.item.lastSyncedAt).to.equal('2026-10-01T00:00:00.000Z');
+
+        const stored = await GitlabCardLink.qm.getOneById(link.id);
+
+        expect(stored.snapshot).to.deep.equal(snapshot);
+      });
+
+      it('falls back to the snapshot when the merge request lookup is forbidden', async () => {
+        await createLink(card.id, {
+          ...branchValues,
+          snapshot: { issue: { title: 'Known title' } },
+        });
+
+        mockGetIssue(12);
+        mockListMergeRequests('all', 403, { message: '403 Forbidden' });
+        mockLatestPipeline();
+        mockListCommits();
+
+        const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+        expect(response.status).to.equal(200);
+        expect(response.body.included.isStale).to.equal(true);
+        expect(response.body.included.gitlabIssue.title).to.equal('Known title');
+        expect(response.body.included.gitlabMergeRequest).to.equal(null);
+      });
+    });
+
+    it('reads a legacy snapshot as the issue when GitLab is down', async () => {
+      await createLink(card.id, {
+        branchName: BRANCH_NAME,
+        snapshot: { title: 'Legacy title', state: 'closed', updatedAt: '2026-09-01T00:00:00.000Z' },
+      });
+      sails.config.custom.gitlabToken = null;
+
+      const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.included.isStale).to.equal(true);
+      expect(response.body.included.gitlabIssue.title).to.equal('Legacy title');
+      expect(response.body.included.gitlabIssue.state).to.equal('closed');
+      expect(response.body.included.gitlabMergeRequest).to.equal(null);
+      expect(response.body.included.gitlabPipeline).to.equal(null);
+      expect(response.body.included.commitsCount).to.equal(null);
+      expect(response.body.included.hasMoreCommits).to.equal(false);
+    });
+
     it('flags a link that belongs to another project after the card was moved', async () => {
       await createLink(card.id);
 
@@ -440,7 +799,7 @@ describe('GitLab card links (controllers)', () => {
       expect(response.body.item.gitlabIntegrationId).to.equal(integration.id);
       expect(response.body.item.issueIid).to.equal(12);
       expect(response.body.item.issueUrl).to.equal(`${GITLAB_URL}/company/erp/-/issues/12`);
-      expect(response.body.item.snapshot.state).to.equal('opened');
+      expect(response.body.item.snapshot.issue.state).to.equal('opened');
       expect(response.body.included.gitlabIssue.iid).to.equal(12);
       expect(response.body.included.suggestedBranchName).to.equal('12-implement-login');
       expect(response.body.included.defaultBranch).to.equal('main');
@@ -506,7 +865,7 @@ describe('GitLab card links (controllers)', () => {
 
       expect(response.status).to.equal(200);
       expect(response.body.item.issueIid).to.equal(12);
-      expect(response.body.item.snapshot.title).to.equal('Issue 12');
+      expect(response.body.item.snapshot.issue.title).to.equal('Issue 12');
       expect(response.body.included.gitlabIssue.iid).to.equal(12);
       expect((await GitlabCardLink.qm.getOneByCardId(card.id)).issueId).to.equal(9012);
     });
@@ -790,6 +1149,287 @@ describe('GitLab card links (controllers)', () => {
 
       expect(response.status).to.equal(422);
       expect(response.body.message).to.equal('GitLab token is invalid or expired');
+    });
+  });
+
+  describe('create merge request', () => {
+    const branchValues = {
+      branchName: BRANCH_NAME,
+      branchUrl: `${GITLAB_URL}/company/erp/-/tree/${BRANCH_NAME}`,
+    };
+
+    it('creates a merge request into the default branch closing the issue', async () => {
+      const link = await createLink(card.id, {
+        ...branchValues,
+        snapshot: {
+          issue: { title: 'Issue 12', state: 'opened' },
+          mergeRequest: null,
+          pipeline: { id: 1, status: 'success' },
+          commitsCount: 3,
+        },
+      });
+
+      mockListMergeRequests('opened');
+      mockGetIssue(12, 200, buildGitlabIssue(12, { title: 'Implement login' }));
+
+      let sentBody;
+      const createdMergeRequest = buildGitlabMergeRequest(7, { title: 'Implement login' });
+      mockCreateMergeRequest(
+        (body) => {
+          sentBody = body;
+        },
+        201,
+        createdMergeRequest,
+      );
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(200);
+      expect(sentBody).to.deep.equal({
+        source_branch: BRANCH_NAME,
+        target_branch: 'main',
+        title: 'Implement login',
+        description: 'Closes #12',
+      });
+      expect(response.body.item.id).to.equal(link.id);
+      expect(response.body.included).to.deep.equal({
+        gitlabMergeRequest: presentGitlabMergeRequest(createdMergeRequest),
+        isExistingMergeRequest: false,
+      });
+
+      const stored = await GitlabCardLink.qm.getOneById(link.id);
+
+      expect(stored.snapshot).to.deep.equal({
+        issue: { title: 'Issue 12', state: 'opened' },
+        mergeRequest: presentGitlabMergeRequest(createdMergeRequest),
+        pipeline: { id: 1, status: 'success' },
+        commitsCount: 3,
+        hasMoreCommits: false,
+      });
+      expect(response.body.item.snapshot).to.deep.equal(stored.snapshot);
+    });
+
+    it('returns the open merge request of the branch without creating one', async () => {
+      await createLink(card.id, {
+        ...branchValues,
+        snapshot: { title: 'Legacy title', state: 'opened' },
+      });
+
+      const existingMergeRequest = buildGitlabMergeRequest(4);
+      mockListMergeRequests('opened', 200, [existingMergeRequest]);
+
+      // No create interceptor: a call would fail because net connect is disabled
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.included).to.deep.equal({
+        gitlabMergeRequest: presentGitlabMergeRequest(existingMergeRequest),
+        isExistingMergeRequest: true,
+      });
+
+      const stored = await GitlabCardLink.qm.getOneByCardId(card.id);
+
+      // A legacy snapshot is upgraded, keeping its issue part
+      expect(stored.snapshot).to.deep.equal({
+        issue: { title: 'Legacy title', state: 'opened' },
+        mergeRequest: presentGitlabMergeRequest(existingMergeRequest),
+        pipeline: null,
+        commitsCount: null,
+        hasMoreCommits: false,
+      });
+    });
+
+    it('returns the merge request opened concurrently when GitLab reports a conflict', async () => {
+      await createLink(card.id, branchValues);
+
+      const racedMergeRequest = buildGitlabMergeRequest(6);
+
+      mockListMergeRequests('opened');
+      mockGetIssue(12);
+      mockCreateMergeRequest(() => {}, 409, {
+        message: ['Another open merge request already exists for this source branch: !6'],
+      });
+      mockListMergeRequests('opened', 200, [racedMergeRequest]);
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.included).to.deep.equal({
+        gitlabMergeRequest: presentGitlabMergeRequest(racedMergeRequest),
+        isExistingMergeRequest: true,
+      });
+    });
+
+    it('answers 422 when the card has no branch', async () => {
+      await createLink(card.id);
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('Card has no GitLab branch');
+    });
+
+    it('answers 422 when the card is not linked', async () => {
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('Card is not linked to a GitLab issue');
+    });
+
+    it('answers 422 when the card was moved to a project linked to another GitLab project', async () => {
+      await createLink(card.id, branchValues);
+
+      const otherPath = await createProjectWithBoard('CRM');
+      await createIntegration(otherPath.project, 77);
+      await addBoardMember(otherPath, editor, BoardMembership.Roles.EDITOR);
+
+      await Card.updateOne(card.id).set({
+        boardId: otherPath.board.id,
+        listId: otherPath.list.id,
+      });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal(
+        'Card was moved to a project linked to another GitLab project',
+      );
+    });
+
+    it('answers 422 when GitLab is down', async () => {
+      await createLink(card.id, branchValues);
+
+      gitlab
+        .intercept({ path: (value) => value.startsWith(MERGE_REQUESTS_PATH), method: 'GET' })
+        .replyWithError(new Error('ECONNREFUSED'));
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('GitLab is unavailable');
+    });
+
+    it('answers 422 when GitLab rejects the token', async () => {
+      await createLink(card.id, branchValues);
+
+      mockListMergeRequests('opened', 401, { message: `401 Unauthorized ${GITLAB_TOKEN}` });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('GitLab token is invalid or expired');
+    });
+
+    it('answers 422 when the issue no longer exists', async () => {
+      await createLink(card.id, branchValues);
+
+      mockListMergeRequests('opened');
+      mockGetIssue(12, 404, { message: '404 Not found' });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('GitLab issue not found');
+    });
+
+    it('answers 422 when GitLab rejects the merge request', async () => {
+      await createLink(card.id, branchValues);
+
+      mockListMergeRequests('opened');
+      mockGetIssue(12);
+      mockCreateMergeRequest(() => {}, 409, {
+        message: ["You can't use same project/branch for source and target"],
+      });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-merge-request`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('GitLab request failed');
+    });
+  });
+
+  describe('commits', () => {
+    it('returns the commits of the branch newest first', async () => {
+      await createLink(card.id, { branchName: BRANCH_NAME });
+
+      mockListCommits(200, [buildGitlabCommit(2), buildGitlabCommit(1)], '50');
+
+      const response = await send(api('get', `/api/cards/${card.id}/gitlab-commits`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.items.map(({ title }) => title)).to.deep.equal(['Commit 2', 'Commit 1']);
+      expect(response.body.items[0]).to.deep.equal({
+        id: '2'.padStart(40, '0'),
+        shortId: '2'.padStart(8, '0'),
+        title: 'Commit 2',
+        authorName: 'Jane Doe',
+        createdAt: '2026-10-05T12:00:00.000Z',
+        webUrl: `${GITLAB_URL}/company/erp/-/commit/${'2'.padStart(40, '0')}`,
+      });
+    });
+
+    it('requests at most the 50 newest commits', async () => {
+      await createLink(card.id, { branchName: BRANCH_NAME });
+
+      // The interceptor only matches per_page=50
+      mockListCommits(
+        200,
+        Array.from({ length: 50 }, (_value, index) => buildGitlabCommit(60 - index)),
+        '50',
+      );
+
+      const response = await send(api('get', `/api/cards/${card.id}/gitlab-commits`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.items).to.have.lengthOf(50);
+      expect(response.body.items[0].title).to.equal('Commit 60');
+      expect(response.body.items[49].title).to.equal('Commit 11');
+    });
+
+    it('returns no commits when GitLab answers an empty list', async () => {
+      await createLink(card.id, { branchName: BRANCH_NAME });
+
+      mockListCommits(200, [], '50');
+
+      const response = await send(api('get', `/api/cards/${card.id}/gitlab-commits`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.items).to.deep.equal([]);
+    });
+
+    it('returns no commits without a link or a branch, without calling GitLab', async () => {
+      const unlinkedResponse = await send(api('get', `/api/cards/${card.id}/gitlab-commits`));
+
+      await createLink(card.id);
+
+      const noBranchResponse = await send(api('get', `/api/cards/${card.id}/gitlab-commits`));
+
+      [unlinkedResponse, noBranchResponse].forEach((response) => {
+        expect(response.status).to.equal(200);
+        expect(response.body.items).to.deep.equal([]);
+      });
+    });
+
+    it('returns no commits when the branch was deleted in GitLab', async () => {
+      await createLink(card.id, { branchName: BRANCH_NAME });
+
+      mockListCommits(404, { message: '404 Not Found' }, '50');
+
+      const response = await send(api('get', `/api/cards/${card.id}/gitlab-commits`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.items).to.deep.equal([]);
+    });
+
+    it('answers 422 when GitLab fails', async () => {
+      await createLink(card.id, { branchName: BRANCH_NAME });
+
+      mockListCommits(502, 'Bad Gateway', '50');
+
+      const response = await send(api('get', `/api/cards/${card.id}/gitlab-commits`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('GitLab is unavailable');
     });
   });
 

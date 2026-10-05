@@ -56,24 +56,43 @@
  *         snapshot:
  *           type: object
  *           nullable: true
- *           description: Last known issue data, shown when GitLab is unreachable
+ *           description: Last known GitLab data, shown when GitLab is unreachable. Links stored before merge requests were supported hold only the issue fields (`title`, `state`, `updatedAt`) at the top level.
  *           properties:
- *             title:
- *               type: string
- *               example: Implement login
- *             state:
- *               type: string
- *               enum: [opened, closed]
- *               example: opened
- *             updatedAt:
- *               type: string
- *               format: date-time
- *               example: 2026-10-05T12:00:00.000Z
+ *             issue:
+ *               type: object
+ *               properties:
+ *                 title:
+ *                   type: string
+ *                   example: Implement login
+ *                 state:
+ *                   type: string
+ *                   enum: [opened, closed]
+ *                   example: opened
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                   example: 2026-10-05T12:00:00.000Z
+ *             mergeRequest:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/GitlabMergeRequest'
+ *               nullable: true
+ *             pipeline:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/GitlabPipeline'
+ *               nullable: true
+ *             commitsCount:
+ *               type: integer
+ *               nullable: true
+ *               maximum: 100
+ *               example: 3
+ *             hasMoreCommits:
+ *               type: boolean
+ *               example: false
  *         lastSyncedAt:
  *           type: string
  *           format: date-time
  *           nullable: true
- *           description: When the issue data was last fetched from GitLab
+ *           description: When the GitLab data was last fetched from GitLab
  *           example: 2026-10-05T12:00:00.000Z
  *         createdAt:
  *           type: string
@@ -112,6 +131,100 @@
  *           format: date-time
  *           nullable: true
  *           example: 2026-10-05T12:00:00.000Z
+ *     GitlabMergeRequest:
+ *       type: object
+ *       description: Merge request data fetched from GitLab
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 5001
+ *         iid:
+ *           type: integer
+ *           example: 7
+ *         title:
+ *           type: string
+ *           example: Implement login
+ *         state:
+ *           type: string
+ *           enum: [opened, closed, locked, merged]
+ *           example: opened
+ *         draft:
+ *           type: boolean
+ *           example: false
+ *         webUrl:
+ *           type: string
+ *           example: https://gitlab.example.com/group/project/-/merge_requests/7
+ *         sourceBranch:
+ *           type: string
+ *           example: 12-implement-login
+ *         targetBranch:
+ *           type: string
+ *           example: develop
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           example: 2026-10-05T12:00:00.000Z
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           example: 2026-10-05T12:00:00.000Z
+ *         mergedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           example: null
+ *     GitlabPipeline:
+ *       type: object
+ *       description: Pipeline data fetched from GitLab
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 287
+ *         status:
+ *           type: string
+ *           description: GitLab pipeline status (e.g. running, success, failed, canceled)
+ *           example: success
+ *         ref:
+ *           type: string
+ *           example: 12-implement-login
+ *         sha:
+ *           type: string
+ *           example: 50f0acb76a40e34a4ff304f7347dcc6587da8a14
+ *         webUrl:
+ *           type: string
+ *           example: https://gitlab.example.com/group/project/-/pipelines/287
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           example: 2026-10-05T12:00:00.000Z
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           example: 2026-10-05T12:00:00.000Z
+ *     GitlabCommit:
+ *       type: object
+ *       description: Commit data fetched from GitLab
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 12d65c8dd2b2676fa3ac47d955accc085a37a9c1
+ *         shortId:
+ *           type: string
+ *           example: 12d65c8d
+ *         title:
+ *           type: string
+ *           example: Add login form
+ *         authorName:
+ *           type: string
+ *           example: Jane Doe
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           example: 2026-10-05T12:00:00.000Z
+ *         webUrl:
+ *           type: string
+ *           nullable: true
+ *           example: https://gitlab.example.com/group/project/-/commit/12d65c8dd2b2676fa3ac47d955accc085a37a9c1
  */
 
 module.exports = {

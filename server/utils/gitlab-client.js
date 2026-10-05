@@ -18,6 +18,7 @@ const ErrorCodes = {
   REQUEST_FAILED: 'gitlabRequestFailed',
   ALREADY_EXISTS: 'gitlabAlreadyExists',
   REF_NOT_FOUND: 'gitlabRefNotFound',
+  MERGE_REQUEST_ALREADY_EXISTS: 'gitlabMergeRequestAlreadyExists',
 };
 
 class GitlabError extends Error {
@@ -84,6 +85,10 @@ const normalizeIssueTitle = (title) => {
   return Array.from(value).slice(0, MAX_ISSUE_TITLE_LENGTH).join('');
 };
 
+const MAX_COMMITS_PER_PAGE = 100;
+
+const MERGE_REQUEST_STATES = ['opened', 'closed', 'locked', 'merged', 'all'];
+
 const encodeIssueIid = (issueIid) => {
   if (!Number.isInteger(issueIid) || issueIid <= 0) {
     throw new GitlabError(ErrorCodes.REQUEST_FAILED, 'Invalid GitLab issue IID');
@@ -121,11 +126,24 @@ const errorFromStatus = (status) => {
 const BRANCH_ALREADY_EXISTS_REGEX = /branch already exists/i;
 const INVALID_REFERENCE_NAME_REGEX = /invalid reference name/i;
 
+// Validation errors may come as an array of messages (e.g. `{ "message": ["..."] }`)
 const readErrorMessage = async (response) => {
   try {
     const body = await response.json();
 
-    return body && typeof body.message === 'string' ? body.message : null;
+    if (!body) {
+      return null;
+    }
+
+    if (typeof body.message === 'string') {
+      return body.message;
+    }
+
+    if (Array.isArray(body.message)) {
+      return body.message.filter((item) => typeof item === 'string').join('\n');
+    }
+
+    return null;
   } catch (error) {
     return null;
   }
@@ -153,6 +171,30 @@ const detectCreateBranchError = async (response) => {
   return null;
 };
 
+// GitLab answers 409 with "Another open merge request already exists for this source branch: !<iid>"
+// (same branch used as source and target is a 409 as well, so the message is checked)
+const MERGE_REQUEST_ALREADY_EXISTS_REGEX = /another open merge request already exists/i;
+
+const detectCreateMergeRequestError = async (response) => {
+  if (response.status !== 409) {
+    return null;
+  }
+
+  const message = await readErrorMessage(response);
+
+  if (message !== null && MERGE_REQUEST_ALREADY_EXISTS_REGEX.test(message)) {
+    return new GitlabError(
+      ErrorCodes.MERGE_REQUEST_ALREADY_EXISTS,
+      'GitLab merge request already exists',
+      409,
+    );
+  }
+
+  return null;
+};
+
+const buildQuery = (params) => new URLSearchParams(params).toString();
+
 const presentProject = (project) => ({
   id: project.id,
   name: project.name,
@@ -173,6 +215,39 @@ const presentIssue = (issue) => ({
   state: issue.state,
   webUrl: issue.web_url,
   updatedAt: issue.updated_at,
+});
+
+const presentMergeRequest = (mergeRequest) => ({
+  id: mergeRequest.id,
+  iid: mergeRequest.iid,
+  title: mergeRequest.title,
+  state: mergeRequest.state,
+  draft: !!mergeRequest.draft,
+  webUrl: mergeRequest.web_url,
+  sourceBranch: mergeRequest.source_branch,
+  targetBranch: mergeRequest.target_branch,
+  createdAt: mergeRequest.created_at,
+  updatedAt: mergeRequest.updated_at,
+  mergedAt: mergeRequest.merged_at || null,
+});
+
+const presentPipeline = (pipeline) => ({
+  id: pipeline.id,
+  status: pipeline.status,
+  ref: pipeline.ref,
+  sha: pipeline.sha,
+  webUrl: pipeline.web_url,
+  createdAt: pipeline.created_at,
+  updatedAt: pipeline.updated_at,
+});
+
+const presentCommit = (commit) => ({
+  id: commit.id,
+  shortId: commit.short_id,
+  title: commit.title,
+  authorName: commit.author_name,
+  createdAt: commit.created_at,
+  webUrl: commit.web_url || null,
 });
 
 const createGitlabClient = ({
@@ -297,6 +372,113 @@ const createGitlabClient = ({
       );
 
       return presentIssue(issue);
+    },
+
+    // Newest first
+    async listMergeRequests(projectRef, { sourceBranch, state = 'all' } = {}) {
+      encodeBranchName(sourceBranch);
+
+      if (!MERGE_REQUEST_STATES.includes(state)) {
+        throw new GitlabError(ErrorCodes.REQUEST_FAILED, 'Invalid merge request state');
+      }
+
+      const query = buildQuery({
+        state,
+        source_branch: sourceBranch,
+        order_by: 'created_at',
+        sort: 'desc',
+        per_page: 20,
+      });
+
+      const mergeRequests = await request(
+        'GET',
+        `/projects/${encodeProjectRef(projectRef)}/merge_requests?${query}`,
+      );
+
+      if (!Array.isArray(mergeRequests)) {
+        throw new GitlabError(ErrorCodes.UNAVAILABLE, 'GitLab returned an invalid response');
+      }
+
+      return mergeRequests.map(presentMergeRequest);
+    },
+
+    async createMergeRequest(projectRef, { sourceBranch, targetBranch, title, description } = {}) {
+      // Both names are validated like path segments, although they travel in the JSON body
+      encodeBranchName(sourceBranch);
+      encodeBranchName(targetBranch);
+
+      const body = {
+        source_branch: sourceBranch,
+        target_branch: targetBranch,
+        title: normalizeIssueTitle(title),
+      };
+
+      if (description !== undefined && description !== null) {
+        body.description = description;
+      }
+
+      const mergeRequest = await request(
+        'POST',
+        `/projects/${encodeProjectRef(projectRef)}/merge_requests`,
+        body,
+        {
+          detectError: detectCreateMergeRequestError,
+        },
+      );
+
+      return presentMergeRequest(mergeRequest);
+    },
+
+    // A ref without pipelines (or a deleted branch) yields an empty list, hence null
+    async getLatestPipeline(projectRef, { ref } = {}) {
+      encodeBranchName(ref);
+
+      const query = buildQuery({
+        ref,
+        order_by: 'id',
+        sort: 'desc',
+        per_page: 1,
+      });
+
+      const pipelines = await request(
+        'GET',
+        `/projects/${encodeProjectRef(projectRef)}/pipelines?${query}`,
+      );
+
+      if (!Array.isArray(pipelines)) {
+        throw new GitlabError(ErrorCodes.UNAVAILABLE, 'GitLab returned an invalid response');
+      }
+
+      return pipelines.length > 0 ? presentPipeline(pipelines[0]) : null;
+    },
+
+    // Commits of `to` that are not in `from` (revision range `from..to`), newest first, at most
+    // `limit` (GitLab caps a page at 100). The commits API is used instead of compare because
+    // compare always returns full diffs. A range with a missing ref (e.g. a deleted branch) is
+    // answered with 404, or possibly with an empty list.
+    async listCommits(projectRef, { from, to, limit } = {}) {
+      encodeBranchName(from);
+      encodeBranchName(to);
+
+      const perPage = Number.isFinite(limit)
+        ? Math.min(MAX_COMMITS_PER_PAGE, Math.max(1, Math.floor(limit)))
+        : MAX_COMMITS_PER_PAGE;
+
+      const query = buildQuery({
+        ref_name: `${from}..${to}`,
+        per_page: perPage,
+      });
+
+      const commits = await request(
+        'GET',
+        `/projects/${encodeProjectRef(projectRef)}/repository/commits?${query}`,
+      );
+
+      if (!Array.isArray(commits)) {
+        throw new GitlabError(ErrorCodes.UNAVAILABLE, 'GitLab returned an invalid response');
+      }
+
+      return commits.map(presentCommit);
     },
   };
 };

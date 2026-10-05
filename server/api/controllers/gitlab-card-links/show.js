@@ -3,7 +3,7 @@
  * /cards/{id}/gitlab:
  *   get:
  *     summary: Get GitLab data of a card
- *     description: Returns the GitLab issue linked to a card. Issue data is fetched live from GitLab; if GitLab fails, the last stored snapshot is returned with `isStale` set, so the card always opens. Requires read access to the card.
+ *     description: Returns the GitLab issue linked to a card and, when the card has a branch, its merge request, latest pipeline and number of commits ahead of the default branch. Data is fetched live from GitLab; if any GitLab call fails, everything is returned from the last stored snapshot with `isStale` set, so the card always opens. Requires read access to the card.
  *     tags:
  *       - GitLab Card Links
  *     operationId: getCardGitlab
@@ -37,6 +37,10 @@
  *                   required:
  *                     - gitlabIntegration
  *                     - gitlabIssue
+ *                     - gitlabMergeRequest
+ *                     - gitlabPipeline
+ *                     - commitsCount
+ *                     - hasMoreCommits
  *                     - isStale
  *                     - isProjectMismatch
  *                     - suggestedBranchName
@@ -57,9 +61,29 @@
  *                       allOf:
  *                         - $ref: '#/components/schemas/GitlabIssue'
  *                       nullable: true
+ *                     gitlabMergeRequest:
+ *                       allOf:
+ *                         - $ref: '#/components/schemas/GitlabMergeRequest'
+ *                       nullable: true
+ *                       description: Newest open merge request of the card's branch, else its newest merged one
+ *                     gitlabPipeline:
+ *                       allOf:
+ *                         - $ref: '#/components/schemas/GitlabPipeline'
+ *                       nullable: true
+ *                       description: Latest pipeline of the card's branch
+ *                     commitsCount:
+ *                       type: integer
+ *                       nullable: true
+ *                       maximum: 100
+ *                       description: Number of commits of the card's branch ahead of the default branch, counted up to 100; null without a branch, once its merge request is merged, or when the branch no longer exists
+ *                       example: 3
+ *                     hasMoreCommits:
+ *                       type: boolean
+ *                       description: Whether the branch has more commits than `commitsCount` (which then is 100)
+ *                       example: false
  *                     isStale:
  *                       type: boolean
- *                       description: Whether the issue data comes from the stored snapshot because GitLab could not be reached
+ *                       description: Whether the GitLab data comes from the stored snapshot because GitLab could not be reached
  *                       example: false
  *                     isProjectMismatch:
  *                       type: boolean
@@ -84,8 +108,15 @@
  */
 
 const { idInput } = require('../../../utils/inputs');
+const { ErrorCodes } = require('../../../utils/gitlab-client');
 const { isGitlabFailure } = require('../../../utils/gitlab-errors');
 const { buildBranchName } = require('../../../utils/git-branch-name');
+const {
+  buildSnapshot,
+  readSnapshot,
+  buildIssueFromSnapshot,
+  selectMergeRequest,
+} = require('../../../utils/gitlab-snapshot');
 
 const Errors = {
   CARD_NOT_FOUND: {
@@ -93,16 +124,70 @@ const Errors = {
   },
 };
 
-const buildIssueFromSnapshot = (gitlabCardLink) => {
-  const snapshot = gitlabCardLink.snapshot || {};
+// Commits are counted up to this many; a full page means there are more
+const COMMITS_LIMIT = 100;
+
+// A deleted branch makes pipeline and commit lookups answer 404, which means there is no data
+// (the commit lookup may also answer with an empty list)
+const nullIfNotFound = (promise) =>
+  promise.catch((error) => {
+    if (error.code === ErrorCodes.NOT_FOUND) {
+      return null;
+    }
+
+    throw error;
+  });
+
+// All calls run in parallel and any failure rejects the whole summary, so the response is either
+// fully live or fully from the snapshot
+const fetchSummary = async (client, linkIntegration, gitlabCardLink) => {
+  const projectRef = linkIntegration.gitlabProjectId;
+  const { branchName } = gitlabCardLink;
+
+  if (!branchName) {
+    const issue = await client.getIssue(projectRef, gitlabCardLink.issueIid);
+
+    return {
+      issue,
+      mergeRequest: null,
+      pipeline: null,
+      commitsCount: null,
+      hasMoreCommits: false,
+    };
+  }
+
+  const [issue, mergeRequests, pipeline, commits] = await Promise.all([
+    client.getIssue(projectRef, gitlabCardLink.issueIid),
+    client.listMergeRequests(projectRef, {
+      sourceBranch: branchName,
+      state: 'all',
+    }),
+    nullIfNotFound(
+      client.getLatestPipeline(projectRef, {
+        ref: branchName,
+      }),
+    ),
+    nullIfNotFound(
+      client.listCommits(projectRef, {
+        from: linkIntegration.defaultBranch,
+        to: branchName,
+        limit: COMMITS_LIMIT,
+      }),
+    ),
+  ]);
+
+  const mergeRequest = selectMergeRequest(mergeRequests);
+
+  // Once merged, the branch has no commits ahead of the default branch (and may be deleted)
+  const isMerged = !!mergeRequest && mergeRequest.state === 'merged';
+  const hasCommits = !isMerged && !!commits;
 
   return {
-    id: gitlabCardLink.issueId,
-    iid: gitlabCardLink.issueIid,
-    title: snapshot.title || null,
-    state: snapshot.state || null,
-    webUrl: gitlabCardLink.issueUrl,
-    updatedAt: snapshot.updatedAt || null,
+    issue,
+    mergeRequest,
+    pipeline,
+    commitsCount: hasCommits ? commits.length : null,
+    hasMoreCommits: hasCommits && commits.length === COMMITS_LIMIT,
   };
 };
 
@@ -136,6 +221,10 @@ module.exports = {
         ? _.pick(gitlabIntegration, ['id', 'gitlabProjectPath'])
         : null,
       gitlabIssue: null,
+      gitlabMergeRequest: null,
+      gitlabPipeline: null,
+      commitsCount: null,
+      hasMoreCommits: false,
       isStale: false,
       isProjectMismatch: false,
       suggestedBranchName: null,
@@ -157,7 +246,7 @@ module.exports = {
     }
 
     let nextGitlabCardLink = gitlabCardLink;
-    let gitlabIssue;
+    let summary;
     try {
       // The issue lives in the GitLab project of the link's integration, which differs from the
       // current one when the card was moved to another project
@@ -169,10 +258,7 @@ module.exports = {
       if (linkIntegration) {
         const client = sails.helpers.gitlab.makeClient();
 
-        gitlabIssue = await client.getIssue(
-          linkIntegration.gitlabProjectId,
-          gitlabCardLink.issueIid,
-        );
+        summary = await fetchSummary(client, linkIntegration, gitlabCardLink);
       }
     } catch (error) {
       // Failure isolation: GitLab problems must never prevent the card from opening
@@ -181,14 +267,14 @@ module.exports = {
       }
 
       sails.log.warn(
-        `GitLab issue refresh failed (code: ${error.code}, status: ${error.status || 'none'}, ` +
+        `GitLab card refresh failed (code: ${error.code}, status: ${error.status || 'none'}, ` +
           `card: ${card.id}, integration: ${gitlabCardLink.gitlabIntegrationId})`,
       );
     }
 
-    if (gitlabIssue) {
+    if (summary) {
       const updatedGitlabCardLink = await GitlabCardLink.qm.updateOne(gitlabCardLink.id, {
-        snapshot: _.pick(gitlabIssue, ['title', 'state', 'updatedAt']),
+        snapshot: buildSnapshot(summary),
         lastSyncedAt: new Date().toISOString(),
       });
 
@@ -197,10 +283,24 @@ module.exports = {
         nextGitlabCardLink = updatedGitlabCardLink;
       }
 
-      included.gitlabIssue = gitlabIssue;
+      Object.assign(included, {
+        gitlabIssue: summary.issue,
+        gitlabMergeRequest: summary.mergeRequest,
+        gitlabPipeline: summary.pipeline,
+        commitsCount: summary.commitsCount,
+        hasMoreCommits: summary.hasMoreCommits,
+      });
     } else {
-      included.gitlabIssue = buildIssueFromSnapshot(gitlabCardLink);
-      included.isStale = true;
+      const snapshot = readSnapshot(gitlabCardLink.snapshot);
+
+      Object.assign(included, {
+        gitlabIssue: buildIssueFromSnapshot(gitlabCardLink),
+        gitlabMergeRequest: snapshot.mergeRequest,
+        gitlabPipeline: snapshot.pipeline,
+        commitsCount: snapshot.commitsCount,
+        hasMoreCommits: snapshot.hasMoreCommits,
+        isStale: true,
+      });
     }
 
     return {
