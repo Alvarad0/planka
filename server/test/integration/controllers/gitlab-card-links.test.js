@@ -135,6 +135,38 @@ describe('GitLab card links (controllers)', () => {
       })
       .reply(status, response);
 
+  const BRANCHES_PATH = `/api/v4/projects/${GITLAB_PROJECT_ID}/repository/branches`;
+
+  const buildGitlabBranch = (name) => ({
+    name,
+    web_url: `${GITLAB_URL}/company/erp/-/tree/${name}`,
+    commit: { id: 'abc' },
+  });
+
+  // Without a response, GitLab answers with the requested branch
+  const mockCreateBranch = (onBody, { status = 201, response } = {}) =>
+    gitlab
+      .intercept({
+        path: BRANCHES_PATH,
+        method: 'POST',
+        headers: { 'private-token': GITLAB_TOKEN },
+        body: (body) => {
+          onBody(JSON.parse(body));
+
+          return true;
+        },
+      })
+      .reply(status, (options) => response || buildGitlabBranch(JSON.parse(options.body).branch));
+
+  const mockGetBranch = (name, status = 200, response = buildGitlabBranch(name)) =>
+    gitlab
+      .intercept({
+        path: `${BRANCHES_PATH}/${encodeURIComponent(name)}`,
+        method: 'GET',
+        headers: { 'private-token': GITLAB_TOKEN },
+      })
+      .reply(status, response);
+
   const createLink = (cardId, values = {}) =>
     GitlabCardLink.qm.createOne({
       cardId,
@@ -213,6 +245,7 @@ describe('GitLab card links (controllers)', () => {
           issueIid: 12,
         }),
         await send(api('delete', `/api/cards/${card.id}/gitlab-link`, OUTSIDER_API_KEY)),
+        await send(api('post', `/api/cards/${card.id}/gitlab-branch`, OUTSIDER_API_KEY)),
       ];
 
       responses.forEach((response) => {
@@ -235,6 +268,7 @@ describe('GitLab card links (controllers)', () => {
           issueIid: 12,
         }),
         await send(api('delete', `/api/cards/${card.id}/gitlab-link`, VIEWER_API_KEY)),
+        await send(api('post', `/api/cards/${card.id}/gitlab-branch`, VIEWER_API_KEY)),
       ];
 
       responses.forEach((response) => {
@@ -260,6 +294,8 @@ describe('GitLab card links (controllers)', () => {
         gitlabIssue: null,
         isStale: false,
         isProjectMismatch: false,
+        suggestedBranchName: null,
+        defaultBranch: 'main',
       });
     });
 
@@ -291,6 +327,36 @@ describe('GitLab card links (controllers)', () => {
 
       expect(stored.snapshot.title).to.equal('Renamed');
       expect(stored.lastSyncedAt).to.not.equal(null);
+    });
+
+    it('returns the suggested branch name and default branch for a linked card', async () => {
+      const accentedCard = await createCard(path, { name: 'Cálculo de Ñandú' });
+      await createLink(accentedCard.id);
+      mockGetIssue(12);
+
+      const response = await send(api('get', `/api/cards/${accentedCard.id}/gitlab`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.included.suggestedBranchName).to.equal('12-calculo-de-nandu');
+      expect(response.body.included.defaultBranch).to.equal('main');
+    });
+
+    it('returns no suggested branch name when the card already has a branch', async () => {
+      await createLink(card.id, {
+        branchName: '12-implement-login',
+        branchUrl: `${GITLAB_URL}/company/erp/-/tree/12-implement-login`,
+      });
+      mockGetIssue(12);
+
+      const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.item.branchName).to.equal('12-implement-login');
+      expect(response.body.item.branchUrl).to.equal(
+        `${GITLAB_URL}/company/erp/-/tree/12-implement-login`,
+      );
+      expect(response.body.included.suggestedBranchName).to.equal(null);
+      expect(response.body.included.defaultBranch).to.equal('main');
     });
 
     it('falls back to the snapshot when GitLab is down', async () => {
@@ -376,6 +442,8 @@ describe('GitLab card links (controllers)', () => {
       expect(response.body.item.issueUrl).to.equal(`${GITLAB_URL}/company/erp/-/issues/12`);
       expect(response.body.item.snapshot.state).to.equal('opened');
       expect(response.body.included.gitlabIssue.iid).to.equal(12);
+      expect(response.body.included.suggestedBranchName).to.equal('12-implement-login');
+      expect(response.body.included.defaultBranch).to.equal('main');
 
       const stored = await GitlabCardLink.qm.getOneByCardId(card.id);
 
@@ -488,6 +556,240 @@ describe('GitLab card links (controllers)', () => {
 
       expect(response.status).to.equal(409);
       expect(response.body.message).to.equal('Card is already linked to a GitLab issue');
+    });
+  });
+
+  describe('create branch', () => {
+    const branchUrl = (name) => `${GITLAB_URL}/company/erp/-/tree/${name}`;
+
+    it('creates a branch with the suggested name from the default branch', async () => {
+      const accentedCard = await createCard(path, { name: 'Cálculo de impuestos (IVA)' });
+      const link = await createLink(accentedCard.id);
+
+      let sentBody;
+      mockCreateBranch((body) => {
+        sentBody = body;
+      });
+
+      const response = await send(api('post', `/api/cards/${accentedCard.id}/gitlab-branch`));
+
+      expect(response.status).to.equal(200);
+      expect(sentBody).to.deep.equal({
+        branch: '12-calculo-de-impuestos-iva',
+        ref: 'main',
+      });
+      expect(response.body.item.id).to.equal(link.id);
+      expect(response.body.item.branchName).to.equal('12-calculo-de-impuestos-iva');
+      expect(response.body.item.branchUrl).to.equal(branchUrl('12-calculo-de-impuestos-iva'));
+      expect(response.body.included).to.deep.equal({
+        gitlabBranch: {
+          name: '12-calculo-de-impuestos-iva',
+          webUrl: branchUrl('12-calculo-de-impuestos-iva'),
+        },
+        isExistingBranch: false,
+      });
+
+      const stored = await GitlabCardLink.qm.getOneById(link.id);
+
+      expect(stored.branchName).to.equal('12-calculo-de-impuestos-iva');
+      expect(stored.branchUrl).to.equal(branchUrl('12-calculo-de-impuestos-iva'));
+    });
+
+    it('creates a branch with a custom name', async () => {
+      await createLink(card.id);
+
+      let sentBody;
+      mockCreateBranch((body) => {
+        sentBody = body;
+      });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`), {
+        name: 'feature/login',
+      });
+
+      expect(response.status).to.equal(200);
+      expect(sentBody).to.deep.equal({ branch: 'feature/login', ref: 'main' });
+      expect(response.body.item.branchName).to.equal('feature/login');
+    });
+
+    it('creates a branch from a custom base branch', async () => {
+      await createLink(card.id);
+
+      let sentBody;
+      mockCreateBranch((body) => {
+        sentBody = body;
+      });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`), {
+        ref: 'release/1.0',
+      });
+
+      expect(response.status).to.equal(200);
+      expect(sentBody).to.deep.equal({ branch: '12-implement-login', ref: 'release/1.0' });
+    });
+
+    it('answers 403 to viewers', async () => {
+      await createLink(card.id);
+
+      const response = await send(
+        api('post', `/api/cards/${card.id}/gitlab-branch`, VIEWER_API_KEY),
+      );
+
+      expect(response.status).to.equal(403);
+      expect((await GitlabCardLink.qm.getOneByCardId(card.id)).branchName).to.equal(null);
+    });
+
+    it('answers 422 when the card is not linked', async () => {
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('Card is not linked to a GitLab issue');
+    });
+
+    it('answers 422 when the card was moved to a project linked to another GitLab project', async () => {
+      await createLink(card.id);
+
+      const otherPath = await createProjectWithBoard('CRM');
+      await createIntegration(otherPath.project, 77);
+      await addBoardMember(otherPath, editor, BoardMembership.Roles.EDITOR);
+
+      await Card.updateOne(card.id).set({
+        boardId: otherPath.board.id,
+        listId: otherPath.list.id,
+      });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal(
+        'Card was moved to a project linked to another GitLab project',
+      );
+    });
+
+    it('answers 422 when the card was moved to a project not linked to GitLab', async () => {
+      await createLink(card.id);
+
+      const otherPath = await createProjectWithBoard('CRM');
+      await addBoardMember(otherPath, editor, BoardMembership.Roles.EDITOR);
+
+      await Card.updateOne(card.id).set({
+        boardId: otherPath.board.id,
+        listId: otherPath.list.id,
+      });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal(
+        'Card was moved to a project linked to another GitLab project',
+      );
+    });
+
+    it('answers 409 when the card already has a branch', async () => {
+      await createLink(card.id, { branchName: 'existing' });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`));
+
+      expect(response.status).to.equal(409);
+      expect(response.body.message).to.equal('Card already has a GitLab branch');
+    });
+
+    it('answers 422 to invalid branch names without calling GitLab', async () => {
+      await createLink(card.id);
+
+      const responses = [
+        await send(api('post', `/api/cards/${card.id}/gitlab-branch`), { name: 'bad..name' }),
+        await send(api('post', `/api/cards/${card.id}/gitlab-branch`), { name: 'bad name' }),
+        await send(api('post', `/api/cards/${card.id}/gitlab-branch`), { name: '-bad' }),
+      ];
+
+      responses.forEach((response) => {
+        expect(response.status).to.equal(422);
+        expect(response.body.message).to.equal('Invalid branch name');
+      });
+
+      const refResponse = await send(api('post', `/api/cards/${card.id}/gitlab-branch`), {
+        ref: 'bad~ref',
+      });
+
+      expect(refResponse.status).to.equal(422);
+      expect(refResponse.body.message).to.equal('Invalid base branch name');
+    });
+
+    it('rejects names longer than 255 characters', async () => {
+      await createLink(card.id);
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`), {
+        name: 'a'.repeat(256),
+      });
+
+      expect(response.status).to.equal(400);
+    });
+
+    it('links the branch when it already exists in GitLab', async () => {
+      await createLink(card.id);
+
+      mockCreateBranch(() => {}, { status: 400, response: { message: 'Branch already exists' } });
+      mockGetBranch('12-implement-login');
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.item.branchName).to.equal('12-implement-login');
+      expect(response.body.item.branchUrl).to.equal(branchUrl('12-implement-login'));
+      expect(response.body.included.isExistingBranch).to.equal(true);
+    });
+
+    it('rejects a branch already linked to another card without calling GitLab', async () => {
+      const otherCard = await createCard(path, { name: 'Other' });
+
+      await createLink(otherCard.id, {
+        issueId: 9013,
+        issueIid: 13,
+        issueUrl: `${GITLAB_URL}/company/erp/-/issues/13`,
+        branchName: 'shared-branch',
+      });
+      await createLink(card.id);
+
+      // No GitLab interceptor: a call would fail because net connect is disabled
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`), {
+        name: 'shared-branch',
+      });
+
+      expect(response.status).to.equal(409);
+      expect(response.body.message).to.equal('GitLab branch is already linked to another card');
+      expect((await GitlabCardLink.qm.getOneByCardId(card.id)).branchName).to.equal(null);
+    });
+
+    it('answers 422 when the base branch does not exist', async () => {
+      await createLink(card.id);
+
+      mockCreateBranch(() => {}, {
+        status: 400,
+        response: { message: 'Invalid reference name: missing' },
+      });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`), {
+        ref: 'missing',
+      });
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('GitLab branch not found');
+      expect((await GitlabCardLink.qm.getOneByCardId(card.id)).branchName).to.equal(null);
+    });
+
+    it('answers 422 when GitLab rejects the token', async () => {
+      await createLink(card.id);
+
+      mockCreateBranch(() => {}, {
+        status: 401,
+        response: { message: `401 Unauthorized ${GITLAB_TOKEN}` },
+      });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`));
+
+      expect(response.status).to.equal(422);
+      expect(response.body.message).to.equal('GitLab token is invalid or expired');
     });
   });
 

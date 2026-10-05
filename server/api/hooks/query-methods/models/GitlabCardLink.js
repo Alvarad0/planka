@@ -15,6 +15,12 @@ const getOneByIntegrationIdAndIssueIid = (gitlabIntegrationId, issueIid) =>
     issueIid,
   });
 
+const getOneByIntegrationIdAndBranchName = (gitlabIntegrationId, branchName) =>
+  GitlabCardLink.findOne({
+    gitlabIntegrationId,
+    branchName,
+  });
+
 const updateOne = (criteria, values) => GitlabCardLink.updateOne(criteria).set({ ...values });
 
 const deleteOne = (criteria) => GitlabCardLink.destroyOne(criteria);
@@ -24,6 +30,7 @@ module.exports = {
   getOneById,
   getOneByCardId,
   getOneByIntegrationIdAndIssueIid,
+  getOneByIntegrationIdAndBranchName,
   updateOne,
   deleteOne,
 };

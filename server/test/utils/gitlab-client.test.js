@@ -217,6 +217,151 @@ describe('GitLab client', () => {
     });
   });
 
+  describe('createBranch', () => {
+    const BRANCH_PATH = '/api/v4/projects/42/repository/branches';
+
+    it('posts branch and ref and presents only the needed fields', async () => {
+      let sentBody;
+
+      gitlab
+        .intercept({
+          path: BRANCH_PATH,
+          method: 'POST',
+          headers: {
+            'private-token': TOKEN,
+            'content-type': 'application/json',
+          },
+          body: (body) => {
+            sentBody = JSON.parse(body);
+
+            return true;
+          },
+        })
+        .reply(201, {
+          name: '12-implement-login',
+          web_url: 'https://gitlab.test/company/erp/-/tree/12-implement-login',
+          commit: { id: 'abc' },
+        });
+
+      const branch = await client.createBranch(42, { name: '12-implement-login', ref: 'develop' });
+
+      expect(sentBody).to.deep.equal({
+        branch: '12-implement-login',
+        ref: 'develop',
+      });
+
+      expect(branch).to.deep.equal({
+        name: '12-implement-login',
+        webUrl: 'https://gitlab.test/company/erp/-/tree/12-implement-login',
+      });
+    });
+
+    it('detects an existing branch without exposing the GitLab message', async () => {
+      gitlab
+        .intercept({ path: BRANCH_PATH, method: 'POST' })
+        .reply(400, { message: 'Branch already exists' });
+
+      const error = await expectGitlabError(
+        client.createBranch(42, { name: 'x', ref: 'develop' }),
+        ErrorCodes.ALREADY_EXISTS,
+      );
+
+      expect(error.status).to.equal(400);
+      expect(error.message).to.equal('GitLab branch already exists');
+    });
+
+    it('detects an existing branch case-insensitively', async () => {
+      gitlab
+        .intercept({ path: BRANCH_PATH, method: 'POST' })
+        .reply(400, { message: 'BRANCH ALREADY EXISTS' });
+
+      await expectGitlabError(
+        client.createBranch(42, { name: 'x', ref: 'develop' }),
+        ErrorCodes.ALREADY_EXISTS,
+      );
+    });
+
+    it('detects a missing base ref', async () => {
+      gitlab
+        .intercept({ path: BRANCH_PATH, method: 'POST' })
+        .reply(400, { message: 'Invalid reference name: missing' });
+
+      const error = await expectGitlabError(
+        client.createBranch(42, { name: 'x', ref: 'missing' }),
+        ErrorCodes.REF_NOT_FOUND,
+      );
+
+      expect(error.message).to.not.include('missing');
+    });
+
+    it('maps any other 400 to gitlabRequestFailed', async () => {
+      gitlab
+        .intercept({ path: BRANCH_PATH, method: 'POST' })
+        .reply(400, { message: 'Something else' });
+
+      const error = await expectGitlabError(
+        client.createBranch(42, { name: 'x', ref: 'develop' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+
+      expect(error.message).to.not.include('Something else');
+    });
+
+    it('maps a 400 with a non-JSON body to gitlabRequestFailed', async () => {
+      gitlab.intercept({ path: BRANCH_PATH, method: 'POST' }).reply(400, 'Bad Request');
+
+      await expectGitlabError(
+        client.createBranch(42, { name: 'x', ref: 'develop' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+    });
+
+    it('maps 404 to gitlabNotFound', async () => {
+      gitlab
+        .intercept({ path: BRANCH_PATH, method: 'POST' })
+        .reply(404, { message: '404 Project Not Found' });
+
+      await expectGitlabError(
+        client.createBranch(42, { name: 'x', ref: 'develop' }),
+        ErrorCodes.NOT_FOUND,
+      );
+    });
+
+    it('never leaks the token even if GitLab echoes it back', async () => {
+      gitlab
+        .intercept({ path: BRANCH_PATH, method: 'POST' })
+        .reply(400, { message: `Branch already exists ${TOKEN}` });
+
+      await expectGitlabError(
+        client.createBranch(42, { name: 'x', ref: 'develop' }),
+        ErrorCodes.ALREADY_EXISTS,
+      );
+
+      gitlab
+        .intercept({ path: BRANCH_PATH, method: 'POST' })
+        .reply(400, { message: `bad token ${TOKEN}` });
+
+      await expectGitlabError(
+        client.createBranch(42, { name: 'x', ref: 'develop' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+    });
+
+    it('rejects invalid names and refs without calling GitLab', async () => {
+      await expectGitlabError(
+        client.createBranch(42, { name: '', ref: 'develop' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+      await expectGitlabError(
+        client.createBranch(42, { name: 'x', ref: 'bad\nref' }),
+        ErrorCodes.REQUEST_FAILED,
+      );
+      await expectGitlabError(client.createBranch(42, {}), ErrorCodes.REQUEST_FAILED);
+
+      expect(mockAgent.pendingInterceptors()).to.have.lengthOf(0);
+    });
+  });
+
   describe('createIssue', () => {
     const ISSUE_RESPONSE = {
       id: 9001,

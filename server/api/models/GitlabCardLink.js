@@ -48,6 +48,11 @@
  *           nullable: true
  *           description: Name of the GitLab branch created for the card
  *           example: 12-implement-login
+ *         branchUrl:
+ *           type: string
+ *           nullable: true
+ *           description: Web URL of the GitLab branch created for the card
+ *           example: https://gitlab.example.com/group/project/-/tree/12-implement-login
  *         snapshot:
  *           type: object
  *           nullable: true
@@ -134,6 +139,11 @@ module.exports = {
       type: 'string',
       allowNull: true,
       columnName: 'branch_name',
+    },
+    branchUrl: {
+      type: 'string',
+      allowNull: true,
+      columnName: 'branch_url',
     },
     snapshot: {
       type: 'json',

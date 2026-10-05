@@ -14,6 +14,8 @@ fetchGitlabCardLink.success = (
   gitlabIssue,
   isStale,
   isProjectMismatch,
+  suggestedBranchName,
+  defaultBranch,
 ) => ({
   type: ActionTypes.GITLAB_CARD_LINK_FETCH__SUCCESS,
   payload: {
@@ -23,6 +25,8 @@ fetchGitlabCardLink.success = (
     gitlabIssue,
     isStale,
     isProjectMismatch,
+    suggestedBranchName,
+    defaultBranch,
   },
 });
 
@@ -36,6 +40,13 @@ fetchGitlabCardLink.failure = (cardId, error) => ({
 
 const handleGitlabCardLinkCreate = (gitlabCardLink) => ({
   type: ActionTypes.GITLAB_CARD_LINK_CREATE_HANDLE,
+  payload: {
+    gitlabCardLink,
+  },
+});
+
+const handleGitlabCardLinkUpdate = (gitlabCardLink) => ({
+  type: ActionTypes.GITLAB_CARD_LINK_UPDATE_HANDLE,
   payload: {
     gitlabCardLink,
   },
@@ -55,12 +66,20 @@ const createGitlabIssueForCard = (cardId) => ({
   },
 });
 
-createGitlabIssueForCard.success = (cardId, gitlabCardLink, gitlabIssue) => ({
+createGitlabIssueForCard.success = (
+  cardId,
+  gitlabCardLink,
+  gitlabIssue,
+  suggestedBranchName,
+  defaultBranch,
+) => ({
   type: ActionTypes.GITLAB_ISSUE_FOR_CARD_CREATE__SUCCESS,
   payload: {
     cardId,
     gitlabCardLink,
     gitlabIssue,
+    suggestedBranchName,
+    defaultBranch,
   },
 });
 
@@ -80,12 +99,20 @@ const linkGitlabIssueToCard = (cardId, data) => ({
   },
 });
 
-linkGitlabIssueToCard.success = (cardId, gitlabCardLink, gitlabIssue) => ({
+linkGitlabIssueToCard.success = (
+  cardId,
+  gitlabCardLink,
+  gitlabIssue,
+  suggestedBranchName,
+  defaultBranch,
+) => ({
   type: ActionTypes.GITLAB_ISSUE_TO_CARD_LINK__SUCCESS,
   payload: {
     cardId,
     gitlabCardLink,
     gitlabIssue,
+    suggestedBranchName,
+    defaultBranch,
   },
 });
 
@@ -120,11 +147,39 @@ unlinkGitlabIssueFromCard.failure = (cardId, error) => ({
   },
 });
 
+const createGitlabBranchForCard = (cardId, data) => ({
+  type: ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE,
+  payload: {
+    cardId,
+    data,
+  },
+});
+
+createGitlabBranchForCard.success = (cardId, gitlabCardLink, gitlabBranch, isExistingBranch) => ({
+  type: ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE__SUCCESS,
+  payload: {
+    cardId,
+    gitlabCardLink,
+    gitlabBranch,
+    isExistingBranch,
+  },
+});
+
+createGitlabBranchForCard.failure = (cardId, error) => ({
+  type: ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE__FAILURE,
+  payload: {
+    cardId,
+    error,
+  },
+});
+
 export default {
   fetchGitlabCardLink,
   handleGitlabCardLinkCreate,
+  handleGitlabCardLinkUpdate,
   handleGitlabCardLinkDelete,
   createGitlabIssueForCard,
   linkGitlabIssueToCard,
   unlinkGitlabIssueFromCard,
+  createGitlabBranchForCard,
 };

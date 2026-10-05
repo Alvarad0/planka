@@ -15,6 +15,14 @@ const ERROR_MESSAGE_KEYS = {
   'GitLab issue is already linked to another card':
     'common.gitlabIssueIsAlreadyLinkedToAnotherCard',
   'GitLab card link not found': 'common.cardIsNotLinkedToGitlabIssue',
+  'Card is not linked to a GitLab issue': 'common.cardIsNotLinkedToGitlabIssue',
+  'Card was moved to a project linked to another GitLab project':
+    'common.cardWasMovedToProjectLinkedToAnotherGitlabProject',
+  'Card already has a GitLab branch': 'common.cardAlreadyHasGitlabBranch',
+  'GitLab branch is already linked to another card':
+    'common.gitlabBranchIsAlreadyLinkedToAnotherCard',
+  'Invalid branch name': 'common.invalidBranchName',
+  'Invalid base branch name': 'common.invalidBaseBranchName',
   'Failed to fetch': 'common.noInternetConnection',
   'Network request failed': 'common.noInternetConnection',
 };

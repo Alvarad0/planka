@@ -124,6 +124,9 @@ export default {
         'Can manage the system wide settings and act as project owner.',
       canOnlyViewBoard: 'Can only view the board.',
       cardActions_title: 'Card Actions',
+      baseBranch: 'Base branch',
+      branchName: 'Branch name',
+      cardAlreadyHasGitlabBranch: 'This card already has a GitLab branch',
       cardIsAlreadyLinkedToGitlabIssue: 'This card is already linked to a GitLab issue',
       cardIsNotLinkedToGitlabIssue: 'This card is not linked to a GitLab issue',
       cardNotFound_title: 'Card Not Found',
@@ -131,6 +134,8 @@ export default {
         'This card was moved from a project linked to another GitLab project.',
       cardWasMovedFromProjectLinkedToGitlabProject:
         'This card was moved from the project linked to {{project}}.',
+      cardWasMovedToProjectLinkedToAnotherGitlabProject:
+        'This card was moved to a project linked to another GitLab project.',
       cardsOnThisListAreAvailableToAllBoardMembers:
         'Cards on this list are available to all board members.',
       cardsOnThisListAreCompleteAndReadyToBeArchived:
@@ -151,6 +156,7 @@ export default {
       copy_inline: 'copy',
       createBoard_title: 'Create Board',
       createCustomFieldGroup_title: 'Create Custom Field Group',
+      createGitlabBranch_title: 'Create GitLab Branch',
       createGitlabIssue_title: 'Create GitLab Issue',
       createLabel_title: 'Create Label',
       createNewOneOrSelectExistingOne: 'Create a new one or select<br />an existing one.',
@@ -296,6 +302,8 @@ export default {
       fullKeyIsHiddenForSecurityReasons:
         'The full key is hidden for security reasons. Regenerate it to create a new one.',
       general: 'General',
+      gitlabBranchIsAlreadyLinkedToAnotherCard:
+        'This GitLab branch is already linked to another card',
       gitlabBranchNotFound: 'GitLab branch not found',
       gitlabIntegrationAlreadyExists: 'This project is already linked to GitLab',
       gitlabIsNotConfigured: 'GitLab is not configured',
@@ -316,6 +324,8 @@ export default {
       identity: 'Identity',
       importBoard_title: 'Import Board',
       information: 'Information',
+      invalidBaseBranchName: 'Invalid base branch name',
+      invalidBranchName: 'Invalid branch name',
       invalidCurrentPassword: 'Invalid current password',
       kanban: 'Kanban',
       labels: 'Labels',
@@ -354,6 +364,7 @@ export default {
       noApiKeyCreated: 'No API key created.',
       noBoards: 'No boards',
       noCardsFound: 'No cards found.',
+      noBranchYet: 'No branch yet',
       noConnectionToServer: 'No connection to server',
       noLists: 'No lists',
       noProjects: 'No projects',
@@ -516,6 +527,8 @@ export default {
       createBoard: 'Create board',
       createCustomFieldGroup: 'Create custom field group',
       createFile: 'Create file',
+      copyCheckoutCommand: 'Copy checkout command',
+      createBranch: 'Create branch',
       createIssue: 'Create new issue',
       createLabel: 'Create label',
       createNewLabel: 'Create new label',
@@ -592,6 +605,7 @@ export default {
       move: 'Move',
       moveCard_title: 'Move Card',
       moveList_title: 'Move List',
+      openBranch: 'Open branch',
       openInGitlab: 'Open in GitLab',
       regenerate: 'Regenerate',
       regenerateApiKey: 'Regenerate API key',

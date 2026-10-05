@@ -39,6 +39,8 @@
  *                     - gitlabIssue
  *                     - isStale
  *                     - isProjectMismatch
+ *                     - suggestedBranchName
+ *                     - defaultBranch
  *                   properties:
  *                     gitlabIntegration:
  *                       type: object
@@ -63,6 +65,16 @@
  *                       type: boolean
  *                       description: Whether the link belongs to an integration other than the one of the card's current project (e.g. the card was moved)
  *                       example: false
+ *                     suggestedBranchName:
+ *                       type: string
+ *                       nullable: true
+ *                       description: Branch name suggested for the card (`<issue IID>-<slug of the card name>`), set only when the card is linked and has no branch yet
+ *                       example: 12-implement-login
+ *                     defaultBranch:
+ *                       type: string
+ *                       nullable: true
+ *                       description: Default base branch of the GitLab integration of the card's current project
+ *                       example: develop
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       401:
@@ -73,6 +85,7 @@
 
 const { idInput } = require('../../../utils/inputs');
 const { isGitlabFailure } = require('../../../utils/gitlab-errors');
+const { buildBranchName } = require('../../../utils/git-branch-name');
 
 const Errors = {
   CARD_NOT_FOUND: {
@@ -125,6 +138,8 @@ module.exports = {
       gitlabIssue: null,
       isStale: false,
       isProjectMismatch: false,
+      suggestedBranchName: null,
+      defaultBranch: gitlabIntegration ? gitlabIntegration.defaultBranch : null,
     };
 
     if (!gitlabCardLink) {
@@ -136,6 +151,10 @@ module.exports = {
 
     const currentIntegrationId = gitlabIntegration ? gitlabIntegration.id : null;
     included.isProjectMismatch = gitlabCardLink.gitlabIntegrationId !== currentIntegrationId;
+
+    if (!gitlabCardLink.branchName) {
+      included.suggestedBranchName = buildBranchName(gitlabCardLink.issueIid, card.name);
+    }
 
     let nextGitlabCardLink = gitlabCardLink;
     let gitlabIssue;

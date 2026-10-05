@@ -227,6 +227,10 @@ const createSocketEventsChannel = () =>
       emit(entryActions.handleGitlabCardLinkCreate(item));
     });
 
+    const handleGitlabCardLinkUpdate = api.makeHandleGitlabCardLinkUpdate(({ item }) => {
+      emit(entryActions.handleGitlabCardLinkUpdate(item));
+    });
+
     const handleGitlabCardLinkDelete = api.makeHandleGitlabCardLinkDelete(({ item }) => {
       emit(entryActions.handleGitlabCardLinkDelete(item));
     });
@@ -374,6 +378,7 @@ const createSocketEventsChannel = () =>
     socket.on('attachmentDelete', handleAttachmentDelete);
 
     socket.on('gitlabCardLinkCreate', handleGitlabCardLinkCreate);
+    socket.on('gitlabCardLinkUpdate', handleGitlabCardLinkUpdate);
     socket.on('gitlabCardLinkDelete', handleGitlabCardLinkDelete);
 
     socket.on('customFieldGroupCreate', handleCustomFieldGroupCreate);
@@ -474,6 +479,7 @@ const createSocketEventsChannel = () =>
       socket.off('attachmentDelete', handleAttachmentDelete);
 
       socket.off('gitlabCardLinkCreate', handleGitlabCardLinkCreate);
+      socket.off('gitlabCardLinkUpdate', handleGitlabCardLinkUpdate);
       socket.off('gitlabCardLinkDelete', handleGitlabCardLinkDelete);
 
       socket.off('customFieldGroupCreate', handleCustomFieldGroupCreate);

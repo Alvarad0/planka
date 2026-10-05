@@ -31,8 +31,42 @@
     margin-top: 8px;
   }
 
+  .branch {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .branchIcon {
+    color: #6b808c;
+    margin: 0;
+  }
+
+  .branchName {
+    background: rgba(9, 30, 66, 0.04);
+    border-radius: 3px;
+    color: #17394d;
+    font-family: monospace;
+    padding: 2px 6px;
+    word-break: break-all;
+  }
+
   .contentModule {
     margin-bottom: 24px;
+  }
+
+  .copyButton {
+    background: transparent;
+    color: #6b808c;
+    margin: 0;
+    padding: 4px;
+
+    &:hover {
+      background: rgba(9, 30, 66, 0.08);
+      color: #092d42;
+    }
   }
 
   .issue {

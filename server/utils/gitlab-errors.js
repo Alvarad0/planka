@@ -51,6 +51,8 @@ const ERRORS_BY_CODE = {
   [ErrorCodes.FORBIDDEN]: GitlabErrors.GITLAB_FORBIDDEN,
   [ErrorCodes.UNAVAILABLE]: GitlabErrors.GITLAB_UNAVAILABLE,
   [ErrorCodes.REQUEST_FAILED]: GitlabErrors.GITLAB_REQUEST_FAILED,
+  // GitLab rejects a missing base ref of a new branch as an invalid reference
+  [ErrorCodes.REF_NOT_FOUND]: GitlabErrors.GITLAB_BRANCH_NOT_FOUND,
 };
 
 const isGitlabFailure = (error) =>

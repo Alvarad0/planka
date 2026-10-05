@@ -11,6 +11,9 @@ const initialState = {
   gitlabIssue: null,
   isStale: false,
   isProjectMismatch: false,
+  // Prefilled values of the "Create branch" form, computed by the server
+  suggestedBranchName: null,
+  defaultBranch: null,
   isFetching: false,
   isFetched: false,
   fetchError: null,
@@ -20,6 +23,8 @@ const initialState = {
   linkError: null,
   isUnlinking: false,
   unlinkError: null,
+  isCreatingBranch: false,
+  createBranchError: null,
 };
 
 // The live issue no longer matches the link, so the section falls back to the link's snapshot
@@ -53,6 +58,8 @@ export default (state = initialState, { type, payload }) => {
         gitlabIssue: payload.gitlabIssue,
         isStale: payload.isStale,
         isProjectMismatch: payload.isProjectMismatch,
+        suggestedBranchName: payload.suggestedBranchName,
+        defaultBranch: payload.defaultBranch,
         isFetching: false,
         isFetched: true,
       };
@@ -94,6 +101,7 @@ export default (state = initialState, { type, payload }) => {
         createError: null,
         linkError: null,
         unlinkError: null,
+        createBranchError: null,
       };
     case ActionTypes.GITLAB_ISSUE_FOR_CARD_CREATE__SUCCESS:
     case ActionTypes.GITLAB_ISSUE_TO_CARD_LINK__SUCCESS:
@@ -106,6 +114,8 @@ export default (state = initialState, { type, payload }) => {
         gitlabIssue: payload.gitlabIssue,
         isStale: false,
         isProjectMismatch: false,
+        suggestedBranchName: payload.suggestedBranchName,
+        defaultBranch: payload.defaultBranch,
         isCreating: false,
         isLinking: false,
       };
@@ -130,6 +140,7 @@ export default (state = initialState, { type, payload }) => {
         createError: null,
         linkError: null,
         unlinkError: null,
+        createBranchError: null,
       };
     case ActionTypes.GITLAB_ISSUE_TO_CARD_LINK__FAILURE:
       if (payload.cardId !== state.cardId) {
@@ -152,6 +163,7 @@ export default (state = initialState, { type, payload }) => {
         createError: null,
         linkError: null,
         unlinkError: null,
+        createBranchError: null,
       };
     case ActionTypes.GITLAB_ISSUE_FROM_CARD_UNLINK__SUCCESS:
       if (payload.cardId !== state.cardId) {
@@ -179,6 +191,38 @@ export default (state = initialState, { type, payload }) => {
         ...state,
         isUnlinking: false,
         unlinkError: payload.error,
+      };
+    case ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        isCreatingBranch: true,
+        createError: null,
+        linkError: null,
+        unlinkError: null,
+        createBranchError: null,
+      };
+    case ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE__SUCCESS:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        isCreatingBranch: false,
+      };
+    case ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE__FAILURE:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        isCreatingBranch: false,
+        createBranchError: payload.error,
       };
     default:
       return state;

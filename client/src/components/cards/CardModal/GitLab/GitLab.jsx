@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { Button, Icon, Label, Message } from 'semantic-ui-react';
@@ -10,6 +10,7 @@ import { isListArchiveOrTrash } from '../../../../utils/record-helpers';
 import getGitlabErrorMessage from '../../../../utils/get-gitlab-error-message';
 import { BoardMembershipRoles } from '../../../../constants/Enums';
 import ConfirmationStep from '../../../common/ConfirmationStep';
+import CreateBranchStep from './CreateBranchStep';
 import CreateIssueStep from './CreateIssueStep';
 import LinkIssueStep from './LinkIssueStep';
 
@@ -19,6 +20,10 @@ const IssueStates = {
   OPENED: 'opened',
   CLOSED: 'closed',
 };
+
+const COPIED_STATE_DURATION = 1000;
+
+const buildCheckoutCommand = (branchName) => `git fetch origin && git checkout ${branchName}`;
 
 // Issue URLs look like <base>/<project path>/-/issues/<iid>
 const getProjectPathFromIssueUrl = (issueUrl) => {
@@ -50,6 +55,10 @@ const GitLab = React.memo(() => {
     linkError,
     isUnlinking,
     unlinkError,
+    suggestedBranchName,
+    defaultBranch,
+    isCreatingBranch,
+    createBranchError,
   } = useSelector(selectors.selectGitlabCardLinkState);
 
   const canEdit = useSelector((state) => {
@@ -65,6 +74,11 @@ const GitLab = React.memo(() => {
 
   const dispatch = useDispatch();
   const [t] = useTranslation();
+
+  const [isCheckoutCommandCopied, setIsCheckoutCommandCopied] = useState(false);
+  const copiedTimeoutRef = useRef(null);
+
+  useEffect(() => () => clearTimeout(copiedTimeoutRef.current), []);
 
   useEffect(() => {
     dispatch(entryActions.fetchGitlabCardLinkInCurrentCard());
@@ -85,8 +99,29 @@ const GitLab = React.memo(() => {
     dispatch(entryActions.unlinkGitlabIssueFromCurrentCard());
   }, [dispatch]);
 
+  const handleCreateBranch = useCallback(
+    (data) => {
+      dispatch(entryActions.createGitlabBranchForCurrentCard(data));
+    },
+    [dispatch],
+  );
+
+  const branchName = gitlabCardLink ? gitlabCardLink.branchName : null;
+
+  const handleCopyCheckoutCommandClick = useCallback(() => {
+    navigator.clipboard.writeText(buildCheckoutCommand(branchName));
+    setIsCheckoutCommandCopied(true);
+
+    clearTimeout(copiedTimeoutRef.current);
+    copiedTimeoutRef.current = setTimeout(
+      () => setIsCheckoutCommandCopied(false),
+      COPIED_STATE_DURATION,
+    );
+  }, [branchName]);
+
   const CreateIssuePopup = usePopupInClosableContext(CreateIssueStep);
   const LinkIssuePopup = usePopupInClosableContext(LinkIssueStep);
+  const CreateBranchPopup = usePopupInClosableContext(CreateBranchStep);
   const ConfirmationPopup = usePopupInClosableContext(ConfirmationStep);
 
   // Nothing is rendered until the first fetch for this card completes, to avoid layout flicker
@@ -98,8 +133,8 @@ const GitLab = React.memo(() => {
     return null;
   }
 
-  const isSubmitting = isCreating || isLinking || isUnlinking;
-  const requestError = createError || linkError || unlinkError;
+  const isSubmitting = isCreating || isLinking || isUnlinking || isCreatingBranch;
+  const requestError = createError || linkError || unlinkError || createBranchError;
 
   let issue = null;
   if (gitlabCardLink) {
@@ -182,6 +217,49 @@ const GitLab = React.memo(() => {
                   : t('common.cardWasMovedFromProjectLinkedToAnotherGitlabProject')}
               </div>
             )}
+            <div className={styles.branch}>
+              <Icon name="code branch" className={styles.branchIcon} />
+              {branchName ? (
+                <>
+                  <code className={styles.branchName}>{branchName}</code>
+                  <Button
+                    type="button"
+                    icon={isCheckoutCommandCopied ? 'check' : 'copy'}
+                    title={t('action.copyCheckoutCommand')}
+                    aria-label={t('action.copyCheckoutCommand')}
+                    className={styles.copyButton}
+                    onClick={handleCopyCheckoutCommandClick}
+                  />
+                  {gitlabCardLink.branchUrl && (
+                    <a
+                      href={gitlabCardLink.branchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.actionLink}
+                    >
+                      <Icon name="external alternate" />
+                      {t('action.openBranch')}
+                    </a>
+                  )}
+                </>
+              ) : canEdit && !isProjectMismatch ? (
+                <CreateBranchPopup
+                  defaultName={suggestedBranchName}
+                  defaultRef={defaultBranch}
+                  onCreate={handleCreateBranch}
+                >
+                  <Button
+                    icon="code branch"
+                    content={t('action.createBranch')}
+                    loading={isCreatingBranch}
+                    disabled={isSubmitting}
+                    className={styles.actionButton}
+                  />
+                </CreateBranchPopup>
+              ) : (
+                <span className={styles.text}>{t('common.noBranchYet')}</span>
+              )}
+            </div>
             <div className={styles.actions}>
               {issueUrl && (
                 <a

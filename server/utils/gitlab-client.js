@@ -16,6 +16,8 @@ const ErrorCodes = {
   FORBIDDEN: 'gitlabForbidden',
   NOT_FOUND: 'gitlabNotFound',
   REQUEST_FAILED: 'gitlabRequestFailed',
+  ALREADY_EXISTS: 'gitlabAlreadyExists',
+  REF_NOT_FOUND: 'gitlabRefNotFound',
 };
 
 class GitlabError extends Error {
@@ -114,6 +116,43 @@ const errorFromStatus = (status) => {
   );
 };
 
+// Error bodies are read only to recognize these fixed GitLab messages; their text never reaches an
+// error message, since GitLab may echo request data back
+const BRANCH_ALREADY_EXISTS_REGEX = /branch already exists/i;
+const INVALID_REFERENCE_NAME_REGEX = /invalid reference name/i;
+
+const readErrorMessage = async (response) => {
+  try {
+    const body = await response.json();
+
+    return body && typeof body.message === 'string' ? body.message : null;
+  } catch (error) {
+    return null;
+  }
+};
+
+const detectCreateBranchError = async (response) => {
+  if (response.status !== 400) {
+    return null;
+  }
+
+  const message = await readErrorMessage(response);
+
+  if (message === null) {
+    return null;
+  }
+
+  if (BRANCH_ALREADY_EXISTS_REGEX.test(message)) {
+    return new GitlabError(ErrorCodes.ALREADY_EXISTS, 'GitLab branch already exists', 400);
+  }
+
+  if (INVALID_REFERENCE_NAME_REGEX.test(message)) {
+    return new GitlabError(ErrorCodes.REF_NOT_FOUND, 'GitLab base branch not found', 400);
+  }
+
+  return null;
+};
+
 const presentProject = (project) => ({
   id: project.id,
   name: project.name,
@@ -149,7 +188,9 @@ const createGitlabClient = ({
 
   const requestDispatcher = dispatcher || (proxyUrl ? new ProxyAgent(proxyUrl) : undefined);
 
-  const request = async (method, path, body) => {
+  // `detectError` may inspect a failed response (and consume its body) to return a more specific
+  // GitlabError; when it returns nothing, the error is derived from the status alone
+  const request = async (method, path, body, { detectError } = {}) => {
     const headers = {
       Accept: 'application/json',
       'PRIVATE-TOKEN': token,
@@ -176,8 +217,16 @@ const createGitlabClient = ({
     }
 
     if (!response.ok) {
+      if (detectError) {
+        const detectedError = await detectError(response);
+
+        if (detectedError) {
+          throw detectedError;
+        }
+      }
+
       // Discard the body so the connection is released; its content is never used in messages
-      if (response.body) {
+      if (response.body && !response.bodyUsed) {
         await response.body.cancel();
       }
 
@@ -202,6 +251,26 @@ const createGitlabClient = ({
       const branch = await request(
         'GET',
         `/projects/${encodeProjectRef(projectRef)}/repository/branches/${encodeBranchName(branchName)}`,
+      );
+
+      return presentBranch(branch);
+    },
+
+    async createBranch(projectRef, { name, ref } = {}) {
+      // Both names are validated like path segments, although they travel in the JSON body
+      encodeBranchName(name);
+      encodeBranchName(ref);
+
+      const branch = await request(
+        'POST',
+        `/projects/${encodeProjectRef(projectRef)}/repository/branches`,
+        {
+          ref,
+          branch: name,
+        },
+        {
+          detectError: detectCreateBranchError,
+        },
       );
 
       return presentBranch(branch);

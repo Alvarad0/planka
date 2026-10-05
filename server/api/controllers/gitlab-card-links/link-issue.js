@@ -48,9 +48,19 @@
  *                   type: object
  *                   required:
  *                     - gitlabIssue
+ *                     - suggestedBranchName
+ *                     - defaultBranch
  *                   properties:
  *                     gitlabIssue:
  *                       $ref: '#/components/schemas/GitlabIssue'
+ *                     suggestedBranchName:
+ *                       type: string
+ *                       description: Branch name suggested for the card (`<issue IID>-<slug of the card name>`)
+ *                       example: 12-implement-login
+ *                     defaultBranch:
+ *                       type: string
+ *                       description: Default base branch of the project's GitLab integration
+ *                       example: develop
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       401:
@@ -67,6 +77,7 @@
 
 const { idInput } = require('../../../utils/inputs');
 const { GitlabErrors, gitlabExits, mapGitlabError } = require('../../../utils/gitlab-errors');
+const { buildBranchName } = require('../../../utils/git-branch-name');
 
 // Upper bound of the integer column storing the IID
 const MAX_ISSUE_IID = 2147483647;
@@ -197,6 +208,8 @@ module.exports = {
       item: sails.helpers.gitlabCardLinks.presentOne(nextGitlabCardLink),
       included: {
         gitlabIssue,
+        suggestedBranchName: buildBranchName(gitlabIssue.iid, card.name),
+        defaultBranch: gitlabIntegration.defaultBranch,
       },
     };
   },

@@ -57,11 +57,16 @@ const linkGitlabIssueToCard = (cardId, data, headers) =>
 const unlinkGitlabIssueFromCard = (cardId, headers) =>
   socket.delete(`/cards/${cardId}/gitlab-link`, undefined, headers).then(transformBody);
 
+const createGitlabBranchForCard = (cardId, data, headers) =>
+  socket.post(`/cards/${cardId}/gitlab-branch`, data, headers).then(transformBody);
+
 /* Event handlers */
 
 const makeHandleGitlabCardLinkCreate = (next) => (body) => {
   next(transformBody(body));
 };
+
+const makeHandleGitlabCardLinkUpdate = makeHandleGitlabCardLinkCreate;
 
 const makeHandleGitlabCardLinkDelete = makeHandleGitlabCardLinkCreate;
 
@@ -70,6 +75,8 @@ export default {
   createGitlabIssueForCard,
   linkGitlabIssueToCard,
   unlinkGitlabIssueFromCard,
+  createGitlabBranchForCard,
   makeHandleGitlabCardLinkCreate,
+  makeHandleGitlabCardLinkUpdate,
   makeHandleGitlabCardLinkDelete,
 };

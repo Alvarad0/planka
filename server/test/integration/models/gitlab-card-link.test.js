@@ -83,6 +83,7 @@ describe('GitlabCardLink', () => {
     expect(link.issueId).to.equal(9001);
     expect(link.issueIid).to.equal(12);
     expect(link.branchName).to.equal(null);
+    expect(link.branchUrl).to.equal(null);
     expect(link.snapshot).to.equal(null);
     expect(link.lastSyncedAt).to.equal(null);
     expect(link.createdAt).to.not.equal(null);
@@ -103,6 +104,21 @@ describe('GitlabCardLink', () => {
     const found = await GitlabCardLink.qm.getOneById(created.id);
 
     expect(found.snapshot).to.deep.equal(snapshot);
+  });
+
+  it('stores the branch name and URL', async () => {
+    const { card, integration } = await createCardWithIntegration();
+    const created = await GitlabCardLink.qm.createOne(buildValues(card.id, integration.id));
+
+    await GitlabCardLink.qm.updateOne(created.id, {
+      branchName: '12-implement-login',
+      branchUrl: 'https://gitlab.test/group/project/-/tree/12-implement-login',
+    });
+
+    const found = await GitlabCardLink.qm.getOneById(created.id);
+
+    expect(found.branchName).to.equal('12-implement-login');
+    expect(found.branchUrl).to.equal('https://gitlab.test/group/project/-/tree/12-implement-login');
   });
 
   it('finds links by card and by integration and issue IID', async () => {

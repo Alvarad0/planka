@@ -12,6 +12,13 @@ const handleGitlabCardLinkCreate = (gitlabCardLink) => ({
   },
 });
 
+const handleGitlabCardLinkUpdate = (gitlabCardLink) => ({
+  type: EntryActionTypes.GITLAB_CARD_LINK_UPDATE_HANDLE,
+  payload: {
+    gitlabCardLink,
+  },
+});
+
 const handleGitlabCardLinkDelete = (gitlabCardLink) => ({
   type: EntryActionTypes.GITLAB_CARD_LINK_DELETE_HANDLE,
   payload: {
@@ -36,11 +43,20 @@ const unlinkGitlabIssueFromCurrentCard = () => ({
   payload: {},
 });
 
+const createGitlabBranchForCurrentCard = (data) => ({
+  type: EntryActionTypes.GITLAB_BRANCH_FOR_CURRENT_CARD_CREATE,
+  payload: {
+    data,
+  },
+});
+
 export default {
   fetchGitlabCardLinkInCurrentCard,
   handleGitlabCardLinkCreate,
+  handleGitlabCardLinkUpdate,
   handleGitlabCardLinkDelete,
   createGitlabIssueForCurrentCard,
   linkGitlabIssueToCurrentCard,
   unlinkGitlabIssueFromCurrentCard,
+  createGitlabBranchForCurrentCard,
 };

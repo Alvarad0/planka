@@ -124,6 +124,9 @@ export default {
         'Puede gestionar la configuración general del sistema y actuar como propietario del proyecto.',
       canOnlyViewBoard: 'Solo puede ver el tablero.',
       cardActions_title: 'Acciones de la tarjeta',
+      baseBranch: 'Rama base',
+      branchName: 'Nombre de la rama',
+      cardAlreadyHasGitlabBranch: 'Esta tarjeta ya tiene una rama de GitLab',
       cardIsAlreadyLinkedToGitlabIssue: 'Esta tarjeta ya está vinculada a un issue de GitLab',
       cardIsNotLinkedToGitlabIssue: 'Esta tarjeta no está vinculada a un issue de GitLab',
       cardNotFound_title: 'Tarjeta no encontrada',
@@ -131,6 +134,8 @@ export default {
         'Esta tarjeta se movió desde un proyecto vinculado a otro proyecto de GitLab.',
       cardWasMovedFromProjectLinkedToGitlabProject:
         'Esta tarjeta se movió desde el proyecto vinculado a {{project}}.',
+      cardWasMovedToProjectLinkedToAnotherGitlabProject:
+        'Esta tarjeta se movió a un proyecto vinculado a otro proyecto de GitLab.',
       cardsOnThisListAreAvailableToAllBoardMembers:
         'Las tarjetas de esta lista están disponibles para todos los miembros del tablero.',
       cardsOnThisListAreCompleteAndReadyToBeArchived:
@@ -151,6 +156,7 @@ export default {
       copy_inline: 'copia',
       createBoard_title: 'Crear tablero',
       createCustomFieldGroup_title: 'Crear grupo de campos personalizados',
+      createGitlabBranch_title: 'Crear rama en GitLab',
       createGitlabIssue_title: 'Crear issue nuevo en GitLab',
       createLabel_title: 'Crear etiqueta',
       createNewOneOrSelectExistingOne: 'Crea uno nuevo o selecciona<br />uno existente.',
@@ -165,11 +171,11 @@ export default {
       customFields_title: 'Campos personalizados',
       discoverPlankaPro: '✨ Más funciones para tus tableros: Descubre PLANKA Pro',
       discoverPlankaPro_title: 'Descubre PLANKA Pro',
-      gitlabIssueClosed: 'Cerrada',
+      gitlabIssueClosed: 'Cerrado',
       gitlabIssueIsAlreadyLinkedToAnotherCard:
         'Este issue de GitLab ya está vinculado a otra tarjeta',
       gitlabIssueNotFound: 'Issue de GitLab no encontrado',
-      gitlabIssueOpen: 'Abierta',
+      gitlabIssueOpen: 'Abierto',
       issueNumber: 'Número de issue',
       issueNumberWithIid: 'Issue #{{iid}}',
       linkGitlabIssue_title: 'Vincular issue existente de GitLab',
@@ -254,6 +260,8 @@ export default {
       fullKeyIsHiddenForSecurityReasons:
         'La clave completa está oculta por razones de seguridad. Regénérala para crear una nueva.',
       general: 'General',
+      gitlabBranchIsAlreadyLinkedToAnotherCard:
+        'Esta rama de GitLab ya está vinculada a otra tarjeta',
       gitlabBranchNotFound: 'Rama de GitLab no encontrada',
       gitlabIntegrationAlreadyExists: 'Este proyecto ya está vinculado a GitLab',
       gitlabIsNotConfigured: 'GitLab no está configurado',
@@ -274,6 +282,8 @@ export default {
       identity: 'Identidad',
       importBoard_title: 'Importar tablero',
       information: 'Información',
+      invalidBaseBranchName: 'Nombre de rama base no válido',
+      invalidBranchName: 'Nombre de rama no válido',
       invalidCurrentPassword: 'Contraseña actual incorrecta',
       kanban: 'Kanban',
       labels: 'Etiquetas',
@@ -312,6 +322,7 @@ export default {
       noApiKeyCreated: 'No se ha creado ninguna clave API.',
       noBoards: 'Sin tableros',
       noCardsFound: 'No se encontraron tarjetas.',
+      noBranchYet: 'Aún no hay rama',
       noConnectionToServer: 'Sin conexión al servidor',
       noLists: 'Sin listas',
       noProjects: 'Sin proyectos',
@@ -475,6 +486,8 @@ export default {
       createBoard: 'Crear tablero',
       createCustomFieldGroup: 'Crear grupo de campos personalizados',
       createFile: 'Crear archivo',
+      copyCheckoutCommand: 'Copiar comando de checkout',
+      createBranch: 'Crear rama',
       createIssue: 'Crear issue nuevo',
       createLabel: 'Crear etiqueta',
       createNewLabel: 'Crear nueva etiqueta',
@@ -547,6 +560,7 @@ export default {
       move: 'Mover',
       moveCard_title: 'Mover tarjeta',
       moveList_title: 'Mover lista',
+      openBranch: 'Abrir rama',
       openInGitlab: 'Abrir en GitLab',
       regenerateApiKey: 'Regenerar clave API',
       remove: 'Eliminar',

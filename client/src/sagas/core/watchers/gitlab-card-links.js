@@ -11,6 +11,9 @@ export default function* gitlabCardLinksWatchers() {
     takeEvery(EntryActionTypes.GITLAB_CARD_LINK_CREATE_HANDLE, ({ payload: { gitlabCardLink } }) =>
       services.handleGitlabCardLinkCreate(gitlabCardLink),
     ),
+    takeEvery(EntryActionTypes.GITLAB_CARD_LINK_UPDATE_HANDLE, ({ payload: { gitlabCardLink } }) =>
+      services.handleGitlabCardLinkUpdate(gitlabCardLink),
+    ),
     takeEvery(EntryActionTypes.GITLAB_CARD_LINK_DELETE_HANDLE, ({ payload: { gitlabCardLink } }) =>
       services.handleGitlabCardLinkDelete(gitlabCardLink),
     ),
@@ -22,6 +25,9 @@ export default function* gitlabCardLinksWatchers() {
     ),
     takeEvery(EntryActionTypes.GITLAB_ISSUE_FROM_CURRENT_CARD_UNLINK, () =>
       services.unlinkGitlabIssueFromCurrentCard(),
+    ),
+    takeEvery(EntryActionTypes.GITLAB_BRANCH_FOR_CURRENT_CARD_CREATE, ({ payload: { data } }) =>
+      services.createGitlabBranchForCurrentCard(data),
     ),
   ]);
 }

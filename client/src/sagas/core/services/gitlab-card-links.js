@@ -13,11 +13,20 @@ export function* fetchGitlabCardLink(cardId) {
   let gitlabIssue;
   let isStale;
   let isProjectMismatch;
+  let suggestedBranchName;
+  let defaultBranch;
 
   try {
     ({
       item: gitlabCardLink,
-      included: { gitlabIntegration, gitlabIssue, isStale, isProjectMismatch },
+      included: {
+        gitlabIntegration,
+        gitlabIssue,
+        isStale,
+        isProjectMismatch,
+        suggestedBranchName,
+        defaultBranch,
+      },
     } = yield call(request, api.getGitlabCardLink, cardId));
   } catch (error) {
     // E_NOT_FOUND means that the card is no longer accessible, the reducers handle it
@@ -33,6 +42,8 @@ export function* fetchGitlabCardLink(cardId) {
       gitlabIssue,
       isStale,
       isProjectMismatch,
+      suggestedBranchName,
+      defaultBranch,
     ),
   );
 }
@@ -47,6 +58,10 @@ export function* handleGitlabCardLinkCreate(gitlabCardLink) {
   yield put(actions.handleGitlabCardLinkCreate(gitlabCardLink));
 }
 
+export function* handleGitlabCardLinkUpdate(gitlabCardLink) {
+  yield put(actions.handleGitlabCardLinkUpdate(gitlabCardLink));
+}
+
 export function* handleGitlabCardLinkDelete(gitlabCardLink) {
   yield put(actions.handleGitlabCardLinkDelete(gitlabCardLink));
 }
@@ -56,18 +71,28 @@ export function* createGitlabIssueForCard(cardId) {
 
   let gitlabCardLink;
   let gitlabIssue;
+  let suggestedBranchName;
+  let defaultBranch;
 
   try {
     ({
       item: gitlabCardLink,
-      included: { gitlabIssue },
+      included: { gitlabIssue, suggestedBranchName, defaultBranch },
     } = yield call(request, api.createGitlabIssueForCard, cardId));
   } catch (error) {
     yield put(actions.createGitlabIssueForCard.failure(cardId, error));
     return;
   }
 
-  yield put(actions.createGitlabIssueForCard.success(cardId, gitlabCardLink, gitlabIssue));
+  yield put(
+    actions.createGitlabIssueForCard.success(
+      cardId,
+      gitlabCardLink,
+      gitlabIssue,
+      suggestedBranchName,
+      defaultBranch,
+    ),
+  );
 }
 
 export function* createGitlabIssueForCurrentCard() {
@@ -81,18 +106,28 @@ export function* linkGitlabIssueToCard(cardId, data) {
 
   let gitlabCardLink;
   let gitlabIssue;
+  let suggestedBranchName;
+  let defaultBranch;
 
   try {
     ({
       item: gitlabCardLink,
-      included: { gitlabIssue },
+      included: { gitlabIssue, suggestedBranchName, defaultBranch },
     } = yield call(request, api.linkGitlabIssueToCard, cardId, data));
   } catch (error) {
     yield put(actions.linkGitlabIssueToCard.failure(cardId, error));
     return;
   }
 
-  yield put(actions.linkGitlabIssueToCard.success(cardId, gitlabCardLink, gitlabIssue));
+  yield put(
+    actions.linkGitlabIssueToCard.success(
+      cardId,
+      gitlabCardLink,
+      gitlabIssue,
+      suggestedBranchName,
+      defaultBranch,
+    ),
+  );
 }
 
 export function* linkGitlabIssueToCurrentCard(data) {
@@ -121,10 +156,44 @@ export function* unlinkGitlabIssueFromCurrentCard() {
   yield call(unlinkGitlabIssueFromCard, cardId);
 }
 
+export function* createGitlabBranchForCard(cardId, data) {
+  yield put(actions.createGitlabBranchForCard(cardId, data));
+
+  let gitlabCardLink;
+  let gitlabBranch;
+  let isExistingBranch;
+
+  try {
+    ({
+      item: gitlabCardLink,
+      included: { gitlabBranch, isExistingBranch },
+    } = yield call(request, api.createGitlabBranchForCard, cardId, data));
+  } catch (error) {
+    yield put(actions.createGitlabBranchForCard.failure(cardId, error));
+    return;
+  }
+
+  yield put(
+    actions.createGitlabBranchForCard.success(
+      cardId,
+      gitlabCardLink,
+      gitlabBranch,
+      isExistingBranch,
+    ),
+  );
+}
+
+export function* createGitlabBranchForCurrentCard(data) {
+  const { cardId } = yield select(selectors.selectPath);
+
+  yield call(createGitlabBranchForCard, cardId, data);
+}
+
 export default {
   fetchGitlabCardLink,
   fetchGitlabCardLinkInCurrentCard,
   handleGitlabCardLinkCreate,
+  handleGitlabCardLinkUpdate,
   handleGitlabCardLinkDelete,
   createGitlabIssueForCard,
   createGitlabIssueForCurrentCard,
@@ -132,4 +201,6 @@ export default {
   linkGitlabIssueToCurrentCard,
   unlinkGitlabIssueFromCard,
   unlinkGitlabIssueFromCurrentCard,
+  createGitlabBranchForCard,
+  createGitlabBranchForCurrentCard,
 };
