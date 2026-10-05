@@ -151,6 +151,14 @@ module.exports.routes = {
   'POST /api/projects/:projectId/background-images': 'background-images/create',
   'DELETE /api/background-images/:id': 'background-images/delete',
 
+  'POST /api/projects/:projectId/gitlab-integration': 'gitlab-integrations/create',
+  'GET /api/projects/:projectId/gitlab-integration': 'gitlab-integrations/show',
+  'PATCH /api/gitlab-integrations/:id': 'gitlab-integrations/update',
+  'POST /api/gitlab-integrations/:id/test-connection': 'gitlab-integrations/test-connection',
+  'POST /api/gitlab-integrations/:id/rotate-webhook-secret':
+    'gitlab-integrations/rotate-webhook-secret',
+  'DELETE /api/gitlab-integrations/:id': 'gitlab-integrations/delete',
+
   'POST /api/projects/:projectId/base-custom-field-groups': 'base-custom-field-groups/create',
   'PATCH /api/base-custom-field-groups/:id': 'base-custom-field-groups/update',
   'DELETE /api/base-custom-field-groups/:id': 'base-custom-field-groups/delete',

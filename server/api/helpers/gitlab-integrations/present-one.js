@@ -9,6 +9,9 @@ module.exports = {
   },
 
   fn(inputs) {
-    return _.omit(inputs.record, ['webhookSecretHash']);
+    return {
+      ..._.omit(inputs.record, ['webhookSecretHash']),
+      webhookUrl: `${sails.config.custom.baseUrl}/api/gitlab/webhooks/${inputs.record.id}`,
+    };
   },
 };

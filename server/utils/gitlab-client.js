@@ -48,6 +48,27 @@ const encodeProjectRef = (projectRef) => {
   return encodeURIComponent(value);
 };
 
+const MAX_BRANCH_NAME_LENGTH = 255;
+
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS_REGEX = /[\u0000-\u001f\u007f]/;
+
+const encodeBranchName = (branchName) => {
+  if (
+    typeof branchName !== 'string' ||
+    branchName.length === 0 ||
+    branchName.length > MAX_BRANCH_NAME_LENGTH ||
+    CONTROL_CHARS_REGEX.test(branchName) ||
+    // Dot segments would be resolved by URL parsing and escape /repository/branches
+    branchName === '.' ||
+    branchName === '..'
+  ) {
+    throw new GitlabError(ErrorCodes.REQUEST_FAILED, 'Invalid GitLab branch name');
+  }
+
+  return encodeURIComponent(branchName);
+};
+
 const errorFromStatus = (status) => {
   if (status === 401) {
     return new GitlabError(ErrorCodes.UNAUTHORIZED, 'GitLab token is invalid or expired', status);
@@ -78,6 +99,11 @@ const presentProject = (project) => ({
   pathWithNamespace: project.path_with_namespace,
   defaultBranch: project.default_branch,
   webUrl: project.web_url,
+});
+
+const presentBranch = (branch) => ({
+  name: branch.name,
+  webUrl: branch.web_url,
 });
 
 const createGitlabClient = ({
@@ -133,6 +159,15 @@ const createGitlabClient = ({
       const project = await request('GET', `/projects/${encodeProjectRef(projectRef)}`);
 
       return presentProject(project);
+    },
+
+    async getBranch(projectRef, branchName) {
+      const branch = await request(
+        'GET',
+        `/projects/${encodeProjectRef(projectRef)}/repository/branches/${encodeBranchName(branchName)}`,
+      );
+
+      return presentBranch(branch);
     },
   };
 };

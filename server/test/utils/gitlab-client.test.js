@@ -159,4 +159,61 @@ describe('GitLab client', () => {
       await expectGitlabError(client.getProject(42), ErrorCodes.REQUEST_FAILED);
     });
   });
+
+  describe('getBranch', () => {
+    it('fetches a branch and presents only the needed fields', async () => {
+      gitlab
+        .intercept({
+          path: '/api/v4/projects/42/repository/branches/develop',
+          method: 'GET',
+          headers: { 'private-token': TOKEN },
+        })
+        .reply(200, {
+          name: 'develop',
+          web_url: 'https://gitlab.test/company/erp/-/tree/develop',
+          commit: { id: 'abc' },
+          protected: true,
+        });
+
+      const branch = await client.getBranch(42, 'develop');
+
+      expect(branch).to.deep.equal({
+        name: 'develop',
+        webUrl: 'https://gitlab.test/company/erp/-/tree/develop',
+      });
+    });
+
+    it('URL-encodes branch names containing slashes', async () => {
+      gitlab
+        .intercept({
+          path: '/api/v4/projects/company%2Ferp/repository/branches/release%2F1.0',
+          method: 'GET',
+        })
+        .reply(200, { name: 'release/1.0', web_url: 'https://gitlab.test/x' });
+
+      const branch = await client.getBranch('company/erp', 'release/1.0');
+
+      expect(branch.name).to.equal('release/1.0');
+    });
+
+    it('maps 404 to gitlabNotFound', async () => {
+      gitlab
+        .intercept({ path: '/api/v4/projects/42/repository/branches/missing' })
+        .reply(404, { message: '404 Branch Not Found' });
+
+      await expectGitlabError(client.getBranch(42, 'missing'), ErrorCodes.NOT_FOUND);
+    });
+
+    it('rejects invalid branch names without calling GitLab', async () => {
+      await expectGitlabError(client.getBranch(42, ''), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(client.getBranch(42, 'a'.repeat(256)), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(client.getBranch(42, 'bad\nname'), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(client.getBranch(42, null), ErrorCodes.REQUEST_FAILED);
+    });
+
+    it('rejects dot-segment branch names that would escape /repository/branches', async () => {
+      await expectGitlabError(client.getBranch(42, '.'), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(client.getBranch(42, '..'), ErrorCodes.REQUEST_FAILED);
+    });
+  });
 });
