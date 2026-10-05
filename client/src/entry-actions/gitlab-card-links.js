@@ -50,6 +50,16 @@ const createGitlabBranchForCurrentCard = (data) => ({
   },
 });
 
+const createGitlabMergeRequestForCurrentCard = () => ({
+  type: EntryActionTypes.GITLAB_MERGE_REQUEST_FOR_CURRENT_CARD_CREATE,
+  payload: {},
+});
+
+const fetchGitlabCommitsInCurrentCard = () => ({
+  type: EntryActionTypes.GITLAB_COMMITS_IN_CURRENT_CARD_FETCH,
+  payload: {},
+});
+
 export default {
   fetchGitlabCardLinkInCurrentCard,
   handleGitlabCardLinkCreate,
@@ -59,4 +69,6 @@ export default {
   linkGitlabIssueToCurrentCard,
   unlinkGitlabIssueFromCurrentCard,
   createGitlabBranchForCurrentCard,
+  createGitlabMergeRequestForCurrentCard,
+  fetchGitlabCommitsInCurrentCard,
 };

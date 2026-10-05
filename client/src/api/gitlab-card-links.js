@@ -1,32 +1,46 @@
 import socket from './socket';
+import readGitlabSnapshot from '../utils/read-gitlab-snapshot';
 
 /* Transformers */
 
-export const transformGitlabCardLink = (gitlabCardLink) => ({
-  ...gitlabCardLink,
-  ...(gitlabCardLink.snapshot && {
-    snapshot: {
-      ...gitlabCardLink.snapshot,
-      ...(gitlabCardLink.snapshot.updatedAt && {
-        updatedAt: new Date(gitlabCardLink.snapshot.updatedAt),
-      }),
-    },
-  }),
-  ...(gitlabCardLink.lastSyncedAt && {
-    lastSyncedAt: new Date(gitlabCardLink.lastSyncedAt),
-  }),
-  ...(gitlabCardLink.createdAt && {
-    createdAt: new Date(gitlabCardLink.createdAt),
-  }),
-  ...(gitlabCardLink.updatedAt && {
-    updatedAt: new Date(gitlabCardLink.updatedAt),
-  }),
-});
+const transformDates = (record, fieldNames) =>
+  fieldNames.reduce(
+    (result, fieldName) =>
+      result[fieldName]
+        ? {
+            ...result,
+            [fieldName]: new Date(result[fieldName]),
+          }
+        : result,
+    record,
+  );
 
-export const transformGitlabIssue = (gitlabIssue) => ({
-  ...gitlabIssue,
-  ...(gitlabIssue.updatedAt && {
-    updatedAt: new Date(gitlabIssue.updatedAt),
+export const transformGitlabIssue = (gitlabIssue) => transformDates(gitlabIssue, ['updatedAt']);
+
+export const transformGitlabMergeRequest = (gitlabMergeRequest) =>
+  transformDates(gitlabMergeRequest, ['createdAt', 'updatedAt', 'mergedAt']);
+
+export const transformGitlabPipeline = (gitlabPipeline) =>
+  transformDates(gitlabPipeline, ['createdAt', 'updatedAt']);
+
+export const transformGitlabCommit = (gitlabCommit) => transformDates(gitlabCommit, ['createdAt']);
+
+// The snapshot is always normalized to its current shape, so legacy links read the same way
+const transformSnapshot = (snapshot) => {
+  const { issue, mergeRequest, pipeline, ...rest } = readGitlabSnapshot(snapshot);
+
+  return {
+    ...rest,
+    issue: transformGitlabIssue(issue),
+    mergeRequest: mergeRequest && transformGitlabMergeRequest(mergeRequest),
+    pipeline: pipeline && transformGitlabPipeline(pipeline),
+  };
+};
+
+export const transformGitlabCardLink = (gitlabCardLink) => ({
+  ...transformDates(gitlabCardLink, ['lastSyncedAt', 'createdAt', 'updatedAt']),
+  ...('snapshot' in gitlabCardLink && {
+    snapshot: transformSnapshot(gitlabCardLink.snapshot),
   }),
 });
 
@@ -38,6 +52,12 @@ const transformBody = (body) => ({
       ...body.included,
       ...(body.included.gitlabIssue && {
         gitlabIssue: transformGitlabIssue(body.included.gitlabIssue),
+      }),
+      ...(body.included.gitlabMergeRequest && {
+        gitlabMergeRequest: transformGitlabMergeRequest(body.included.gitlabMergeRequest),
+      }),
+      ...(body.included.gitlabPipeline && {
+        gitlabPipeline: transformGitlabPipeline(body.included.gitlabPipeline),
       }),
     },
   }),
@@ -60,6 +80,15 @@ const unlinkGitlabIssueFromCard = (cardId, headers) =>
 const createGitlabBranchForCard = (cardId, data, headers) =>
   socket.post(`/cards/${cardId}/gitlab-branch`, data, headers).then(transformBody);
 
+const createGitlabMergeRequestForCard = (cardId, headers) =>
+  socket.post(`/cards/${cardId}/gitlab-merge-request`, undefined, headers).then(transformBody);
+
+const getGitlabCommitsForCard = (cardId, headers) =>
+  socket.get(`/cards/${cardId}/gitlab-commits`, undefined, headers).then((body) => ({
+    ...body,
+    items: body.items.map(transformGitlabCommit),
+  }));
+
 /* Event handlers */
 
 const makeHandleGitlabCardLinkCreate = (next) => (body) => {
@@ -76,6 +105,8 @@ export default {
   linkGitlabIssueToCard,
   unlinkGitlabIssueFromCard,
   createGitlabBranchForCard,
+  createGitlabMergeRequestForCard,
+  getGitlabCommitsForCard,
   makeHandleGitlabCardLinkCreate,
   makeHandleGitlabCardLinkUpdate,
   makeHandleGitlabCardLinkDelete,

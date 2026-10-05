@@ -10,6 +10,7 @@ import { isListArchiveOrTrash } from '../../../../utils/record-helpers';
 import getGitlabErrorMessage from '../../../../utils/get-gitlab-error-message';
 import { BoardMembershipRoles } from '../../../../constants/Enums';
 import ConfirmationStep from '../../../common/ConfirmationStep';
+import Commits from './Commits';
 import CreateBranchStep from './CreateBranchStep';
 import CreateIssueStep from './CreateIssueStep';
 import LinkIssueStep from './LinkIssueStep';
@@ -19,6 +20,55 @@ import styles from './GitLab.module.scss';
 const IssueStates = {
   OPENED: 'opened',
   CLOSED: 'closed',
+};
+
+const MergeRequestStates = {
+  OPENED: 'opened',
+  MERGED: 'merged',
+  CLOSED: 'closed',
+};
+
+const MERGE_REQUEST_STATE_PROPS_BY_STATE = {
+  [MergeRequestStates.OPENED]: {
+    color: 'green',
+    key: 'common.gitlabMergeRequestOpen',
+  },
+  [MergeRequestStates.MERGED]: {
+    color: 'purple',
+    key: 'common.gitlabMergeRequestMerged',
+  },
+  [MergeRequestStates.CLOSED]: {
+    color: 'red',
+    key: 'common.gitlabMergeRequestClosed',
+  },
+};
+
+// Unknown statuses are shown as they come, without a colour
+const PIPELINE_STATUS_PROPS_BY_STATUS = {
+  success: {
+    color: 'green',
+    key: 'common.gitlabPipelineSuccess',
+  },
+  failed: {
+    color: 'red',
+    key: 'common.gitlabPipelineFailed',
+  },
+  running: {
+    color: 'blue',
+    key: 'common.gitlabPipelineRunning',
+  },
+  pending: {
+    color: 'yellow',
+    key: 'common.gitlabPipelinePending',
+  },
+  canceled: {
+    color: 'grey',
+    key: 'common.gitlabPipelineCanceled',
+  },
+  skipped: {
+    color: 'grey',
+    key: 'common.gitlabPipelineSkipped',
+  },
 };
 
 const COPIED_STATE_DURATION = 1000;
@@ -45,6 +95,10 @@ const GitLab = React.memo(() => {
     cardId,
     gitlabIntegration,
     gitlabIssue,
+    gitlabMergeRequest,
+    gitlabPipeline,
+    commitsCount,
+    hasMoreCommits,
     isStale,
     isProjectMismatch,
     isFetched,
@@ -59,6 +113,8 @@ const GitLab = React.memo(() => {
     defaultBranch,
     isCreatingBranch,
     createBranchError,
+    isCreatingMergeRequest,
+    createMergeRequestError,
   } = useSelector(selectors.selectGitlabCardLinkState);
 
   const canEdit = useSelector((state) => {
@@ -106,6 +162,10 @@ const GitLab = React.memo(() => {
     [dispatch],
   );
 
+  const handleCreateMergeRequestClick = useCallback(() => {
+    dispatch(entryActions.createGitlabMergeRequestForCurrentCard());
+  }, [dispatch]);
+
   const branchName = gitlabCardLink ? gitlabCardLink.branchName : null;
 
   const handleCopyCheckoutCommandClick = useCallback(() => {
@@ -133,23 +193,42 @@ const GitLab = React.memo(() => {
     return null;
   }
 
-  const isSubmitting = isCreating || isLinking || isUnlinking || isCreatingBranch;
-  const requestError = createError || linkError || unlinkError || createBranchError;
+  const isSubmitting =
+    isCreating || isLinking || isUnlinking || isCreatingBranch || isCreatingMergeRequest;
+  const requestError =
+    createError || linkError || unlinkError || createBranchError || createMergeRequestError;
+
+  // Actions that call GitLab are offered only for the link's own project and while it is reachable
+  const canUseGitlab = canEdit && !isProjectMismatch && !isStale;
 
   let issue = null;
+  let mergeRequest = null;
   if (gitlabCardLink) {
+    // The snapshot is normalized by the API layer, legacy links included
+    const { snapshot } = gitlabCardLink;
+
     // Without a live issue (e.g. linked from another session) the link's snapshot is shown
     issue =
       gitlabIssue && gitlabIssue.iid === gitlabCardLink.issueIid
         ? gitlabIssue
         : {
             iid: gitlabCardLink.issueIid,
-            ...(gitlabCardLink.snapshot && {
-              title: gitlabCardLink.snapshot.title,
-              state: gitlabCardLink.snapshot.state,
+            ...(snapshot && {
+              title: snapshot.issue.title,
+              state: snapshot.issue.state,
             }),
           };
+
+    // Same for a merge request opened from another session, which only updates the snapshot
+    if (branchName) {
+      mergeRequest = gitlabMergeRequest || (snapshot && snapshot.mergeRequest);
+    }
   }
+
+  const mergeRequestStateProps =
+    mergeRequest && MERGE_REQUEST_STATE_PROPS_BY_STATE[mergeRequest.state];
+  const pipelineStatusProps =
+    gitlabPipeline && PIPELINE_STATUS_PROPS_BY_STATUS[gitlabPipeline.status];
 
   const issueUrl = (issue && issue.webUrl) || (gitlabCardLink && gitlabCardLink.issueUrl);
   const linkedProjectPath = gitlabCardLink && getProjectPathFromIssueUrl(gitlabCardLink.issueUrl);
@@ -198,13 +277,15 @@ const GitLab = React.memo(() => {
               <div className={styles.warning}>
                 <Icon name="warning sign" />
                 {t('common.gitlabIsUnavailable')}
-                {gitlabCardLink.lastSyncedAt &&
-                  ` · ${t('common.lastSynchronization', {
-                    date: t('format:dateTime', {
-                      value: gitlabCardLink.lastSyncedAt,
-                      postProcess: 'formatDate',
-                    }),
-                  })}`}
+                {' · '}
+                {gitlabCardLink.lastSyncedAt
+                  ? t('common.lastSynchronization', {
+                      date: t('format:dateTime', {
+                        value: gitlabCardLink.lastSyncedAt,
+                        postProcess: 'formatDate',
+                      }),
+                    })
+                  : t('common.neverSynchronized')}
               </div>
             )}
             {isProjectMismatch && (
@@ -219,7 +300,7 @@ const GitLab = React.memo(() => {
             )}
             <div className={styles.branch}>
               <Icon name="code branch" className={styles.branchIcon} />
-              {branchName ? (
+              {branchName && (
                 <>
                   <code className={styles.branchName}>{branchName}</code>
                   <Button
@@ -242,7 +323,8 @@ const GitLab = React.memo(() => {
                     </a>
                   )}
                 </>
-              ) : canEdit && !isProjectMismatch ? (
+              )}
+              {!branchName && canUseGitlab && (
                 <CreateBranchPopup
                   defaultName={suggestedBranchName}
                   defaultRef={defaultBranch}
@@ -256,10 +338,80 @@ const GitLab = React.memo(() => {
                     className={styles.actionButton}
                   />
                 </CreateBranchPopup>
-              ) : (
+              )}
+              {!branchName && !canUseGitlab && (
                 <span className={styles.text}>{t('common.noBranchYet')}</span>
               )}
             </div>
+            {branchName && (mergeRequest || canUseGitlab) && (
+              <div className={styles.row}>
+                <Icon name="exchange" className={styles.rowIcon} />
+                {mergeRequest ? (
+                  <>
+                    <a
+                      href={mergeRequest.webUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.issueLink}
+                    >
+                      <span className={styles.issueNumber}>
+                        {t('common.mergeRequestNumberWithIid', {
+                          iid: mergeRequest.iid,
+                        })}
+                      </span>
+                      {mergeRequest.title && (
+                        <span className={styles.issueTitle}>{mergeRequest.title}</span>
+                      )}
+                    </a>
+                    {mergeRequest.draft && (
+                      <Label size="tiny" className={styles.issueState}>
+                        {t('common.gitlabMergeRequestDraft')}
+                      </Label>
+                    )}
+                    {mergeRequestStateProps && (
+                      <Label
+                        size="tiny"
+                        color={mergeRequestStateProps.color}
+                        className={styles.issueState}
+                      >
+                        {t(mergeRequestStateProps.key)}
+                      </Label>
+                    )}
+                  </>
+                ) : (
+                  <Button
+                    icon="exchange"
+                    content={t('action.createMergeRequest')}
+                    loading={isCreatingMergeRequest}
+                    disabled={isSubmitting}
+                    className={styles.actionButton}
+                    onClick={handleCreateMergeRequestClick}
+                  />
+                )}
+              </div>
+            )}
+            {branchName && gitlabPipeline && (
+              <div className={styles.row}>
+                <Icon name="rocket" className={styles.rowIcon} />
+                <span className={styles.text}>{t('common.pipeline')}</span>
+                <Label
+                  as={gitlabPipeline.webUrl ? 'a' : undefined}
+                  href={gitlabPipeline.webUrl || undefined}
+                  target={gitlabPipeline.webUrl ? '_blank' : undefined}
+                  rel={gitlabPipeline.webUrl ? 'noopener noreferrer' : undefined}
+                  size="tiny"
+                  color={pipelineStatusProps ? pipelineStatusProps.color : undefined}
+                  className={styles.issueState}
+                >
+                  {pipelineStatusProps
+                    ? t(pipelineStatusProps.key)
+                    : String(gitlabPipeline.status || '').replace(/_/g, ' ')}
+                </Label>
+              </div>
+            )}
+            {branchName && commitsCount !== null && (
+              <Commits count={commitsCount} hasMore={hasMoreCommits} isExpandable={!isStale} />
+            )}
             <div className={styles.actions}>
               {issueUrl && (
                 <a

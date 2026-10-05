@@ -1,0 +1,75 @@
+:global(#app) {
+  .commit {
+    align-items: baseline;
+    display: flex;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  .content {
+    min-width: 0;
+  }
+
+  .icon {
+    color: #6b808c;
+    margin: 0;
+  }
+
+  .list {
+    border-left: 2px solid rgba(9, 30, 66, 0.08);
+    margin: 4px 0 0 6px;
+    padding-left: 12px;
+  }
+
+  .meta {
+    color: #6b808c;
+    font-size: 12px;
+  }
+
+  .row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .shortId {
+    background: rgba(9, 30, 66, 0.04);
+    border-radius: 3px;
+    color: #17394d;
+    flex-shrink: 0;
+    font-family: monospace;
+    padding: 2px 6px;
+  }
+
+  a.shortId:hover {
+    text-decoration: underline;
+  }
+
+  .text {
+    color: #6b808c;
+  }
+
+  .title {
+    color: #17394d;
+    word-wrap: break-word;
+  }
+
+  .toggleButton {
+    background: transparent;
+    color: #6b808c;
+    font-weight: normal;
+    margin: 0;
+    padding: 4px 8px;
+
+    &:hover {
+      background: rgba(9, 30, 66, 0.08);
+      color: #092d42;
+    }
+  }
+
+  .toggleIcon {
+    margin: 0 0 0 4px;
+  }
+}

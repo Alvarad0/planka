@@ -12,6 +12,10 @@ fetchGitlabCardLink.success = (
   gitlabCardLink,
   gitlabIntegration,
   gitlabIssue,
+  gitlabMergeRequest,
+  gitlabPipeline,
+  commitsCount,
+  hasMoreCommits,
   isStale,
   isProjectMismatch,
   suggestedBranchName,
@@ -23,6 +27,10 @@ fetchGitlabCardLink.success = (
     gitlabCardLink,
     gitlabIntegration,
     gitlabIssue,
+    gitlabMergeRequest,
+    gitlabPipeline,
+    commitsCount,
+    hasMoreCommits,
     isStale,
     isProjectMismatch,
     suggestedBranchName,
@@ -173,6 +181,59 @@ createGitlabBranchForCard.failure = (cardId, error) => ({
   },
 });
 
+const createGitlabMergeRequestForCard = (cardId) => ({
+  type: ActionTypes.GITLAB_MERGE_REQUEST_FOR_CARD_CREATE,
+  payload: {
+    cardId,
+  },
+});
+
+createGitlabMergeRequestForCard.success = (
+  cardId,
+  gitlabCardLink,
+  gitlabMergeRequest,
+  isExistingMergeRequest,
+) => ({
+  type: ActionTypes.GITLAB_MERGE_REQUEST_FOR_CARD_CREATE__SUCCESS,
+  payload: {
+    cardId,
+    gitlabCardLink,
+    gitlabMergeRequest,
+    isExistingMergeRequest,
+  },
+});
+
+createGitlabMergeRequestForCard.failure = (cardId, error) => ({
+  type: ActionTypes.GITLAB_MERGE_REQUEST_FOR_CARD_CREATE__FAILURE,
+  payload: {
+    cardId,
+    error,
+  },
+});
+
+const fetchGitlabCommits = (cardId) => ({
+  type: ActionTypes.GITLAB_COMMITS_FETCH,
+  payload: {
+    cardId,
+  },
+});
+
+fetchGitlabCommits.success = (cardId, gitlabCommits) => ({
+  type: ActionTypes.GITLAB_COMMITS_FETCH__SUCCESS,
+  payload: {
+    cardId,
+    gitlabCommits,
+  },
+});
+
+fetchGitlabCommits.failure = (cardId, error) => ({
+  type: ActionTypes.GITLAB_COMMITS_FETCH__FAILURE,
+  payload: {
+    cardId,
+    error,
+  },
+});
+
 export default {
   fetchGitlabCardLink,
   handleGitlabCardLinkCreate,
@@ -182,4 +243,6 @@ export default {
   linkGitlabIssueToCard,
   unlinkGitlabIssueFromCard,
   createGitlabBranchForCard,
+  createGitlabMergeRequestForCard,
+  fetchGitlabCommits,
 };

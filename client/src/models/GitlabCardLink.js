@@ -53,6 +53,7 @@ export default class extends BaseModel {
       case ActionTypes.GITLAB_CARD_LINK_CREATE_HANDLE:
       case ActionTypes.GITLAB_CARD_LINK_UPDATE_HANDLE:
       case ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE__SUCCESS:
+      case ActionTypes.GITLAB_MERGE_REQUEST_FOR_CARD_CREATE__SUCCESS:
         GitlabCardLink.upsert(payload.gitlabCardLink);
 
         break;

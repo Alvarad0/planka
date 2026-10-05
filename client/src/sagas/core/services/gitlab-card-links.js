@@ -11,6 +11,10 @@ export function* fetchGitlabCardLink(cardId) {
   let gitlabCardLink;
   let gitlabIntegration;
   let gitlabIssue;
+  let gitlabMergeRequest;
+  let gitlabPipeline;
+  let commitsCount;
+  let hasMoreCommits;
   let isStale;
   let isProjectMismatch;
   let suggestedBranchName;
@@ -22,6 +26,10 @@ export function* fetchGitlabCardLink(cardId) {
       included: {
         gitlabIntegration,
         gitlabIssue,
+        gitlabMergeRequest,
+        gitlabPipeline,
+        commitsCount,
+        hasMoreCommits,
         isStale,
         isProjectMismatch,
         suggestedBranchName,
@@ -40,6 +48,10 @@ export function* fetchGitlabCardLink(cardId) {
       gitlabCardLink,
       gitlabIntegration,
       gitlabIssue,
+      gitlabMergeRequest,
+      gitlabPipeline,
+      commitsCount,
+      hasMoreCommits,
       isStale,
       isProjectMismatch,
       suggestedBranchName,
@@ -189,6 +201,59 @@ export function* createGitlabBranchForCurrentCard(data) {
   yield call(createGitlabBranchForCard, cardId, data);
 }
 
+export function* createGitlabMergeRequestForCard(cardId) {
+  yield put(actions.createGitlabMergeRequestForCard(cardId));
+
+  let gitlabCardLink;
+  let gitlabMergeRequest;
+  let isExistingMergeRequest;
+
+  try {
+    ({
+      item: gitlabCardLink,
+      included: { gitlabMergeRequest, isExistingMergeRequest },
+    } = yield call(request, api.createGitlabMergeRequestForCard, cardId));
+  } catch (error) {
+    yield put(actions.createGitlabMergeRequestForCard.failure(cardId, error));
+    return;
+  }
+
+  yield put(
+    actions.createGitlabMergeRequestForCard.success(
+      cardId,
+      gitlabCardLink,
+      gitlabMergeRequest,
+      isExistingMergeRequest,
+    ),
+  );
+}
+
+export function* createGitlabMergeRequestForCurrentCard() {
+  const { cardId } = yield select(selectors.selectPath);
+
+  yield call(createGitlabMergeRequestForCard, cardId);
+}
+
+export function* fetchGitlabCommits(cardId) {
+  yield put(actions.fetchGitlabCommits(cardId));
+
+  let gitlabCommits;
+  try {
+    ({ items: gitlabCommits } = yield call(request, api.getGitlabCommitsForCard, cardId));
+  } catch (error) {
+    yield put(actions.fetchGitlabCommits.failure(cardId, error));
+    return;
+  }
+
+  yield put(actions.fetchGitlabCommits.success(cardId, gitlabCommits));
+}
+
+export function* fetchGitlabCommitsInCurrentCard() {
+  const { cardId } = yield select(selectors.selectPath);
+
+  yield call(fetchGitlabCommits, cardId);
+}
+
 export default {
   fetchGitlabCardLink,
   fetchGitlabCardLinkInCurrentCard,
@@ -203,4 +268,8 @@ export default {
   unlinkGitlabIssueFromCurrentCard,
   createGitlabBranchForCard,
   createGitlabBranchForCurrentCard,
+  createGitlabMergeRequestForCard,
+  createGitlabMergeRequestForCurrentCard,
+  fetchGitlabCommits,
+  fetchGitlabCommitsInCurrentCard,
 };

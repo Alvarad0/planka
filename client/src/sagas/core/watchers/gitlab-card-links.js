@@ -29,5 +29,11 @@ export default function* gitlabCardLinksWatchers() {
     takeEvery(EntryActionTypes.GITLAB_BRANCH_FOR_CURRENT_CARD_CREATE, ({ payload: { data } }) =>
       services.createGitlabBranchForCurrentCard(data),
     ),
+    takeEvery(EntryActionTypes.GITLAB_MERGE_REQUEST_FOR_CURRENT_CARD_CREATE, () =>
+      services.createGitlabMergeRequestForCurrentCard(),
+    ),
+    takeEvery(EntryActionTypes.GITLAB_COMMITS_IN_CURRENT_CARD_FETCH, () =>
+      services.fetchGitlabCommitsInCurrentCard(),
+    ),
   ]);
 }

@@ -129,6 +129,19 @@
     position: relative;
   }
 
+  .row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .rowIcon {
+    color: #6b808c;
+    margin: 0;
+  }
+
   .text {
     color: #6b808c;
   }

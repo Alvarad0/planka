@@ -9,6 +9,11 @@ const initialState = {
   cardId: null,
   gitlabIntegration: null,
   gitlabIssue: null,
+  // Merge request, pipeline and commit count of the card's branch
+  gitlabMergeRequest: null,
+  gitlabPipeline: null,
+  commitsCount: null,
+  hasMoreCommits: false,
   isStale: false,
   isProjectMismatch: false,
   // Prefilled values of the "Create branch" form, computed by the server
@@ -25,11 +30,29 @@ const initialState = {
   unlinkError: null,
   isCreatingBranch: false,
   createBranchError: null,
+  isCreatingMergeRequest: false,
+  createMergeRequestError: null,
+  // Commits of the card's branch, fetched when the list is first opened
+  gitlabCommits: null,
+  isFetchingCommits: false,
+  commitsError: null,
 };
+
+// Branch data that no longer matches the link (e.g. its branch changed)
+const resetBranchData = (state) => ({
+  ...state,
+  gitlabMergeRequest: null,
+  gitlabPipeline: null,
+  commitsCount: null,
+  hasMoreCommits: false,
+  gitlabCommits: null,
+  isFetchingCommits: false,
+  commitsError: null,
+});
 
 // The live issue no longer matches the link, so the section falls back to the link's snapshot
 const resetIssue = (state) => ({
-  ...state,
+  ...resetBranchData(state),
   gitlabIssue: null,
   isStale: false,
   isProjectMismatch: false,
@@ -56,6 +79,10 @@ export default (state = initialState, { type, payload }) => {
         ...state,
         gitlabIntegration: payload.gitlabIntegration,
         gitlabIssue: payload.gitlabIssue,
+        gitlabMergeRequest: payload.gitlabMergeRequest,
+        gitlabPipeline: payload.gitlabPipeline,
+        commitsCount: payload.commitsCount,
+        hasMoreCommits: payload.hasMoreCommits,
         isStale: payload.isStale,
         isProjectMismatch: payload.isProjectMismatch,
         suggestedBranchName: payload.suggestedBranchName,
@@ -102,6 +129,7 @@ export default (state = initialState, { type, payload }) => {
         linkError: null,
         unlinkError: null,
         createBranchError: null,
+        createMergeRequestError: null,
       };
     case ActionTypes.GITLAB_ISSUE_FOR_CARD_CREATE__SUCCESS:
     case ActionTypes.GITLAB_ISSUE_TO_CARD_LINK__SUCCESS:
@@ -110,7 +138,7 @@ export default (state = initialState, { type, payload }) => {
       }
 
       return {
-        ...state,
+        ...resetBranchData(state),
         gitlabIssue: payload.gitlabIssue,
         isStale: false,
         isProjectMismatch: false,
@@ -141,6 +169,7 @@ export default (state = initialState, { type, payload }) => {
         linkError: null,
         unlinkError: null,
         createBranchError: null,
+        createMergeRequestError: null,
       };
     case ActionTypes.GITLAB_ISSUE_TO_CARD_LINK__FAILURE:
       if (payload.cardId !== state.cardId) {
@@ -164,6 +193,7 @@ export default (state = initialState, { type, payload }) => {
         linkError: null,
         unlinkError: null,
         createBranchError: null,
+        createMergeRequestError: null,
       };
     case ActionTypes.GITLAB_ISSUE_FROM_CARD_UNLINK__SUCCESS:
       if (payload.cardId !== state.cardId) {
@@ -204,6 +234,7 @@ export default (state = initialState, { type, payload }) => {
         linkError: null,
         unlinkError: null,
         createBranchError: null,
+        createMergeRequestError: null,
       };
     case ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE__SUCCESS:
       if (payload.cardId !== state.cardId) {
@@ -211,7 +242,7 @@ export default (state = initialState, { type, payload }) => {
       }
 
       return {
-        ...state,
+        ...resetBranchData(state),
         isCreatingBranch: false,
       };
     case ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE__FAILURE:
@@ -223,6 +254,70 @@ export default (state = initialState, { type, payload }) => {
         ...state,
         isCreatingBranch: false,
         createBranchError: payload.error,
+      };
+    case ActionTypes.GITLAB_MERGE_REQUEST_FOR_CARD_CREATE:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        isCreatingMergeRequest: true,
+        createError: null,
+        linkError: null,
+        unlinkError: null,
+        createBranchError: null,
+        createMergeRequestError: null,
+      };
+    case ActionTypes.GITLAB_MERGE_REQUEST_FOR_CARD_CREATE__SUCCESS:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        gitlabMergeRequest: payload.gitlabMergeRequest,
+        isCreatingMergeRequest: false,
+      };
+    case ActionTypes.GITLAB_MERGE_REQUEST_FOR_CARD_CREATE__FAILURE:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        isCreatingMergeRequest: false,
+        createMergeRequestError: payload.error,
+      };
+    case ActionTypes.GITLAB_COMMITS_FETCH:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        isFetchingCommits: true,
+        commitsError: null,
+      };
+    case ActionTypes.GITLAB_COMMITS_FETCH__SUCCESS:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        gitlabCommits: payload.gitlabCommits,
+        isFetchingCommits: false,
+      };
+    case ActionTypes.GITLAB_COMMITS_FETCH__FAILURE:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        isFetchingCommits: false,
+        commitsError: payload.error,
       };
     default:
       return state;

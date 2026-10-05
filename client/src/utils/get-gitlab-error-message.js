@@ -19,6 +19,7 @@ const ERROR_MESSAGE_KEYS = {
   'Card was moved to a project linked to another GitLab project':
     'common.cardWasMovedToProjectLinkedToAnotherGitlabProject',
   'Card already has a GitLab branch': 'common.cardAlreadyHasGitlabBranch',
+  'Card has no GitLab branch': 'common.cardHasNoGitlabBranch',
   'GitLab branch is already linked to another card':
     'common.gitlabBranchIsAlreadyLinkedToAnotherCard',
   'Invalid branch name': 'common.invalidBranchName',
