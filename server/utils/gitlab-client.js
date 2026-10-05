@@ -69,6 +69,27 @@ const encodeBranchName = (branchName) => {
   return encodeURIComponent(branchName);
 };
 
+const MAX_ISSUE_TITLE_LENGTH = 255;
+
+const normalizeIssueTitle = (title) => {
+  const value = typeof title === 'string' ? title.trim() : '';
+
+  if (value.length === 0) {
+    throw new GitlabError(ErrorCodes.REQUEST_FAILED, 'Invalid issue title');
+  }
+
+  // Code points, not UTF-16 units, so a surrogate pair is never split
+  return Array.from(value).slice(0, MAX_ISSUE_TITLE_LENGTH).join('');
+};
+
+const encodeIssueIid = (issueIid) => {
+  if (!Number.isInteger(issueIid) || issueIid <= 0) {
+    throw new GitlabError(ErrorCodes.REQUEST_FAILED, 'Invalid GitLab issue IID');
+  }
+
+  return String(issueIid);
+};
+
 const errorFromStatus = (status) => {
   if (status === 401) {
     return new GitlabError(ErrorCodes.UNAUTHORIZED, 'GitLab token is invalid or expired', status);
@@ -106,6 +127,15 @@ const presentBranch = (branch) => ({
   webUrl: branch.web_url,
 });
 
+const presentIssue = (issue) => ({
+  id: issue.id,
+  iid: issue.iid,
+  title: issue.title,
+  state: issue.state,
+  webUrl: issue.web_url,
+  updatedAt: issue.updated_at,
+});
+
 const createGitlabClient = ({
   baseUrl,
   token,
@@ -119,16 +149,23 @@ const createGitlabClient = ({
 
   const requestDispatcher = dispatcher || (proxyUrl ? new ProxyAgent(proxyUrl) : undefined);
 
-  const request = async (method, path) => {
+  const request = async (method, path, body) => {
+    const headers = {
+      Accept: 'application/json',
+      'PRIVATE-TOKEN': token,
+      'User-Agent': 'planka-gitlab-bridge',
+    };
+
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     let response;
     try {
       response = await fetch(`${baseUrl}/api/v4${path}`, {
         method,
-        headers: {
-          Accept: 'application/json',
-          'PRIVATE-TOKEN': token,
-          'User-Agent': 'planka-gitlab-bridge',
-        },
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
         dispatcher: requestDispatcher,
         signal: AbortSignal.timeout(timeout),
       });
@@ -168,6 +205,29 @@ const createGitlabClient = ({
       );
 
       return presentBranch(branch);
+    },
+
+    async createIssue(projectRef, { title, description } = {}) {
+      const body = {
+        title: normalizeIssueTitle(title),
+      };
+
+      if (description !== undefined && description !== null) {
+        body.description = description;
+      }
+
+      const issue = await request('POST', `/projects/${encodeProjectRef(projectRef)}/issues`, body);
+
+      return presentIssue(issue);
+    },
+
+    async getIssue(projectRef, issueIid) {
+      const issue = await request(
+        'GET',
+        `/projects/${encodeProjectRef(projectRef)}/issues/${encodeIssueIid(issueIid)}`,
+      );
+
+      return presentIssue(issue);
     },
   };
 };

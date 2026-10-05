@@ -159,6 +159,11 @@ module.exports.routes = {
     'gitlab-integrations/rotate-webhook-secret',
   'DELETE /api/gitlab-integrations/:id': 'gitlab-integrations/delete',
 
+  'GET /api/cards/:id/gitlab': 'gitlab-card-links/show',
+  'POST /api/cards/:id/gitlab-issue': 'gitlab-card-links/create-issue',
+  'POST /api/cards/:id/gitlab-link': 'gitlab-card-links/link-issue',
+  'DELETE /api/cards/:id/gitlab-link': 'gitlab-card-links/unlink',
+
   'POST /api/projects/:projectId/base-custom-field-groups': 'base-custom-field-groups/create',
   'PATCH /api/base-custom-field-groups/:id': 'base-custom-field-groups/update',
   'DELETE /api/base-custom-field-groups/:id': 'base-custom-field-groups/delete',

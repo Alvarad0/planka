@@ -216,4 +216,141 @@ describe('GitLab client', () => {
       await expectGitlabError(client.getBranch(42, '..'), ErrorCodes.REQUEST_FAILED);
     });
   });
+
+  describe('createIssue', () => {
+    const ISSUE_RESPONSE = {
+      id: 9001,
+      iid: 12,
+      title: 'Implement login',
+      state: 'opened',
+      web_url: 'https://gitlab.test/company/erp/-/issues/12',
+      updated_at: '2026-10-05T12:00:00.000Z',
+      author: { id: 1 },
+    };
+
+    it('sends a JSON body and presents only the needed fields', async () => {
+      let sentBody;
+
+      gitlab
+        .intercept({
+          path: '/api/v4/projects/42/issues',
+          method: 'POST',
+          headers: {
+            'private-token': TOKEN,
+            'content-type': 'application/json',
+          },
+          body: (body) => {
+            sentBody = JSON.parse(body);
+
+            return true;
+          },
+        })
+        .reply(201, ISSUE_RESPONSE);
+
+      const issue = await client.createIssue(42, {
+        title: '  Implement login  ',
+        description: 'Details',
+      });
+
+      expect(sentBody).to.deep.equal({
+        title: 'Implement login',
+        description: 'Details',
+      });
+
+      expect(issue).to.deep.equal({
+        id: 9001,
+        iid: 12,
+        title: 'Implement login',
+        state: 'opened',
+        webUrl: 'https://gitlab.test/company/erp/-/issues/12',
+        updatedAt: '2026-10-05T12:00:00.000Z',
+      });
+    });
+
+    it('omits a missing description and truncates long titles to 255 characters', async () => {
+      let sentBody;
+
+      gitlab
+        .intercept({
+          path: '/api/v4/projects/42/issues',
+          method: 'POST',
+          body: (body) => {
+            sentBody = JSON.parse(body);
+
+            return true;
+          },
+        })
+        .reply(201, ISSUE_RESPONSE);
+
+      await client.createIssue(42, {
+        title: 'a'.repeat(300),
+        description: null,
+      });
+
+      expect(sentBody.title).to.equal('a'.repeat(255));
+      expect(sentBody).to.not.have.property('description');
+    });
+
+    it('rejects an empty title without calling GitLab', async () => {
+      await expectGitlabError(client.createIssue(42, { title: '   ' }), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(client.createIssue(42, {}), ErrorCodes.REQUEST_FAILED);
+
+      expect(mockAgent.pendingInterceptors()).to.have.lengthOf(0);
+    });
+
+    it('maps 404 to gitlabNotFound', async () => {
+      gitlab
+        .intercept({ path: '/api/v4/projects/42/issues', method: 'POST' })
+        .reply(404, { message: '404 Project Not Found' });
+
+      await expectGitlabError(client.createIssue(42, { title: 'x' }), ErrorCodes.NOT_FOUND);
+    });
+  });
+
+  describe('getIssue', () => {
+    it('fetches an issue by IID', async () => {
+      gitlab
+        .intercept({
+          path: '/api/v4/projects/42/issues/12',
+          method: 'GET',
+          headers: { 'private-token': TOKEN },
+        })
+        .reply(200, {
+          id: 9001,
+          iid: 12,
+          title: 'Implement login',
+          state: 'closed',
+          web_url: 'https://gitlab.test/company/erp/-/issues/12',
+          updated_at: '2026-10-05T12:00:00.000Z',
+          description: 'Not presented',
+        });
+
+      const issue = await client.getIssue(42, 12);
+
+      expect(issue).to.deep.equal({
+        id: 9001,
+        iid: 12,
+        title: 'Implement login',
+        state: 'closed',
+        webUrl: 'https://gitlab.test/company/erp/-/issues/12',
+        updatedAt: '2026-10-05T12:00:00.000Z',
+      });
+    });
+
+    it('rejects invalid IIDs without calling GitLab', async () => {
+      await expectGitlabError(client.getIssue(42, 0), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(client.getIssue(42, -1), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(client.getIssue(42, 1.5), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(client.getIssue(42, '12'), ErrorCodes.REQUEST_FAILED);
+      await expectGitlabError(client.getIssue(42, '../1'), ErrorCodes.REQUEST_FAILED);
+    });
+
+    it('maps 404 to gitlabNotFound', async () => {
+      gitlab
+        .intercept({ path: '/api/v4/projects/42/issues/99' })
+        .reply(404, { message: '404 Not found' });
+
+      await expectGitlabError(client.getIssue(42, 99), ErrorCodes.NOT_FOUND);
+    });
+  });
 });

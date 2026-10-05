@@ -24,6 +24,9 @@ const GitlabErrors = {
   GITLAB_BRANCH_NOT_FOUND: {
     gitlabBranchNotFound: 'GitLab branch not found',
   },
+  GITLAB_ISSUE_NOT_FOUND: {
+    gitlabIssueNotFound: 'GitLab issue not found',
+  },
   GITLAB_UNAVAILABLE: {
     gitlabUnavailable: 'GitLab is unavailable',
   },
@@ -54,7 +57,7 @@ const isGitlabFailure = (error) =>
   !!error && (error.name === 'GitlabError' || error.code === NOT_CONFIGURED_CODE);
 
 // Converts a GitLab failure into a controller error, logging only safe metadata. `notFoundError`
-// is what a GitLab 404 means in the caller's context (missing project or missing branch).
+// is what a GitLab 404 means in the caller's context (missing project, branch or issue).
 // Anything that is not a GitLab failure is returned untouched, so it surfaces as a 500.
 const mapGitlabError = (
   error,
@@ -79,5 +82,6 @@ const mapGitlabError = (
 module.exports = {
   GitlabErrors,
   gitlabExits,
+  isGitlabFailure,
   mapGitlabError,
 };
