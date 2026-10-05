@@ -9,7 +9,7 @@ import entryActions from '../../../../entry-actions';
 import { usePopupInClosableContext } from '../../../../hooks';
 import ConfirmationStep from '../../../common/ConfirmationStep';
 import CopyableInput from './CopyableInput';
-import getErrorMessage from './get-error-message';
+import getGitlabErrorMessage from '../../../../utils/get-gitlab-error-message';
 
 import styles from './WebhookSection.module.scss';
 
@@ -58,7 +58,7 @@ const WebhookSection = React.memo(({ gitlabIntegration }) => {
       {webhookSecretRotateError && (
         <Message
           error
-          content={getErrorMessage(webhookSecretRotateError, t)}
+          content={getGitlabErrorMessage(webhookSecretRotateError, t)}
           className={styles.message}
         />
       )}

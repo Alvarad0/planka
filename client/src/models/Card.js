@@ -769,6 +769,9 @@ export default class extends BaseModel {
           linkedCardId: null,
         });
       });
+
+      // Card payloads do not include GitLab links, so a soft delete (refetch) must keep them
+      this.gitlabCardLinks.delete();
     }
 
     this.attachments.delete();

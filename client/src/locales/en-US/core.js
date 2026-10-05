@@ -85,6 +85,8 @@ export default {
         'Are you sure you want to remove this member from the board?',
       areYouSureYouWantToRotateTheWebhookSecret:
         'Are you sure you want to rotate the webhook secret? The current secret will stop working and you will need to update it in GitLab.',
+      areYouSureYouWantToUnlinkThisCardFromGitlabIssue:
+        'Are you sure you want to unlink this card from the GitLab issue? The issue stays in GitLab.',
       areYouSureYouWantToUnlinkThisGitlabProject:
         'Are you sure you want to unlink the GitLab project from this project?',
       assignAsOwner_title: 'Assign As Owner',
@@ -122,7 +124,13 @@ export default {
         'Can manage the system wide settings and act as project owner.',
       canOnlyViewBoard: 'Can only view the board.',
       cardActions_title: 'Card Actions',
+      cardIsAlreadyLinkedToGitlabIssue: 'This card is already linked to a GitLab issue',
+      cardIsNotLinkedToGitlabIssue: 'This card is not linked to a GitLab issue',
       cardNotFound_title: 'Card Not Found',
+      cardWasMovedFromProjectLinkedToAnotherGitlabProject:
+        'This card was moved from a project linked to another GitLab project.',
+      cardWasMovedFromProjectLinkedToGitlabProject:
+        'This card was moved from the project linked to {{project}}.',
       cardsOnThisListAreAvailableToAllBoardMembers:
         'Cards on this list are available to all board members.',
       cardsOnThisListAreCompleteAndReadyToBeArchived:
@@ -143,6 +151,7 @@ export default {
       copy_inline: 'copy',
       createBoard_title: 'Create Board',
       createCustomFieldGroup_title: 'Create Custom Field Group',
+      createGitlabIssue_title: 'Create GitLab Issue',
       createLabel_title: 'Create Label',
       createNewOneOrSelectExistingOne: 'Create a new one or select<br />an existing one.',
       createProject_title: 'Create Project',
@@ -169,11 +178,21 @@ export default {
       enterTotpOrRecoveryCode:
         'Enter the 6-digit code from your authenticator app, or one of your recovery codes (xxxxx-xxxxx).',
       expires: 'Expires',
+      gitlabIssueClosed: 'Closed',
+      gitlabIssueIsAlreadyLinkedToAnotherCard:
+        'This GitLab issue is already linked to another card',
+      gitlabIssueNotFound: 'GitLab issue not found',
+      gitlabIssueOpen: 'Open',
       invalidTotpCode: 'Invalid TOTP or recovery code',
+      issueNumber: 'Issue number',
+      issueNumberWithIid: 'Issue #{{iid}}',
       lastUsed: 'Last used',
+      linkGitlabIssue_title: 'Link GitLab Issue',
       never: 'Never',
       noTrustedDevices: 'No trusted devices.',
+      notLinkedToGitlabIssue: 'Not linked to a GitLab issue',
       orEnterSecretManually: 'Or enter this secret manually:',
+      projectIsNotLinkedToGitlab: 'This project is not linked to GitLab',
       recoveryCodesExhausted:
         'All recovery codes have been used. Regenerate a new set to keep a fallback in case you lose your authenticator app.',
       recoveryCodesIntro:
@@ -191,6 +210,8 @@ export default {
       scanQrCodeWithApp:
         'Scan this QR code with an authenticator app such as Google Authenticator or Authy.',
       security_title: 'Security',
+      thisWillCreateIssueInGitlabProjectWithCardNameAndDescription:
+        'This will create an issue in {{project}} with the card name and description.',
       totpCode: 'TOTP code',
       totpOrRecoveryCode: 'TOTP or recovery code',
       trustedDevices_title: 'Trusted Browsers',
@@ -201,6 +222,7 @@ export default {
         'Add an extra layer of security to your account using a time-based one-time code from an authenticator app.',
       twoFactorAuthentication: 'Two-Factor Authentication',
       unknownDevice: 'Unknown device',
+      unlinkGitlabIssue_title: 'Unlink GitLab Issue',
       upgradeTeamToPro_title: 'Upgrade Team to Pro',
       proFeatureCalendar: '✨ Calendar View for your boards',
       proFeatureRecurringCards: '✨ Recurring Cards',
@@ -494,6 +516,7 @@ export default {
       createBoard: 'Create board',
       createCustomFieldGroup: 'Create custom field group',
       createFile: 'Create file',
+      createIssue: 'Create new issue',
       createLabel: 'Create label',
       createNewLabel: 'Create new label',
       createProject: 'Create project',
@@ -556,6 +579,8 @@ export default {
       leave: 'Leave',
       leaveBoard: 'Leave board',
       leaveProject: 'Leave project',
+      link: 'Link',
+      linkIssue: 'Link existing issue',
       logOut_title: 'Log Out',
       linkProject: 'Link project',
       logOutNow: 'Log out now',
@@ -567,6 +592,7 @@ export default {
       move: 'Move',
       moveCard_title: 'Move Card',
       moveList_title: 'Move List',
+      openInGitlab: 'Open in GitLab',
       regenerate: 'Regenerate',
       regenerateApiKey: 'Regenerate API key',
       regenerateRecoveryCodes: 'Regenerate recovery codes',
@@ -599,6 +625,8 @@ export default {
       stop: 'Stop',
       subscribe: 'Subscribe',
       testConnection: 'Test connection',
+      unlink: 'Unlink',
+      unlinkGitlabIssue: 'Unlink GitLab issue',
       unlinkGitlabProject: 'Unlink GitLab project',
       unlinkGitlabProject_title: 'Unlink GitLab Project',
       unsubscribe: 'Unsubscribe',

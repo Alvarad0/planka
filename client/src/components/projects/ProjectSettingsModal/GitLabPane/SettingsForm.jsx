@@ -9,7 +9,7 @@ import selectors from '../../../../selectors';
 import entryActions from '../../../../entry-actions';
 import { useForm } from '../../../../hooks';
 import { ListTypes } from '../../../../constants/Enums';
-import getErrorMessage from './get-error-message';
+import getGitlabErrorMessage from '../../../../utils/get-gitlab-error-message';
 
 import styles from './SettingsForm.module.scss';
 
@@ -155,7 +155,7 @@ const SettingsForm = React.memo(({ gitlabIntegration }) => {
         />
       </Form>
       {updateError && (
-        <Message error content={getErrorMessage(updateError, t)} className={styles.message} />
+        <Message error content={getGitlabErrorMessage(updateError, t)} className={styles.message} />
       )}
     </>
   );

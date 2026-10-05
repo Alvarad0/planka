@@ -10,7 +10,7 @@ import ConfirmationStep from '../../../common/ConfirmationStep';
 import LinkForm from './LinkForm';
 import SettingsForm from './SettingsForm';
 import WebhookSection from './WebhookSection';
-import getErrorMessage from './get-error-message';
+import getGitlabErrorMessage from '../../../../utils/get-gitlab-error-message';
 
 import styles from './GitLabPane.module.scss';
 
@@ -54,7 +54,7 @@ const GitLabPane = React.memo(() => {
   if (fetchError) {
     return (
       <Tab.Pane attached={false} className={styles.wrapper}>
-        <Message error content={getErrorMessage(fetchError, t)} />
+        <Message error content={getGitlabErrorMessage(fetchError, t)} />
       </Tab.Pane>
     );
   }
@@ -92,7 +92,7 @@ const GitLabPane = React.memo(() => {
         (connectionTestResult.error ? (
           <Message
             error
-            content={getErrorMessage(connectionTestResult.error, t)}
+            content={getGitlabErrorMessage(connectionTestResult.error, t)}
             className={styles.message}
           />
         ) : (
@@ -146,7 +146,7 @@ const GitLabPane = React.memo(() => {
         </ConfirmationPopup>
       </div>
       {deleteError && (
-        <Message error content={getErrorMessage(deleteError, t)} className={styles.message} />
+        <Message error content={getGitlabErrorMessage(deleteError, t)} className={styles.message} />
       )}
     </Tab.Pane>
   );

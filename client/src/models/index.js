@@ -10,6 +10,7 @@ import ProjectManager from './ProjectManager';
 import BackgroundImage from './BackgroundImage';
 import BaseCustomFieldGroup from './BaseCustomFieldGroup';
 import GitlabIntegration from './GitlabIntegration';
+import GitlabCardLink from './GitlabCardLink';
 import Board from './Board';
 import BoardMembership from './BoardMembership';
 import Label from './Label';
@@ -34,6 +35,7 @@ export {
   BackgroundImage,
   BaseCustomFieldGroup,
   GitlabIntegration,
+  GitlabCardLink,
   Board,
   BoardMembership,
   Label,

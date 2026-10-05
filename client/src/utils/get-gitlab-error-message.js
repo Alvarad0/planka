@@ -5,10 +5,16 @@ const ERROR_MESSAGE_KEYS = {
   'GitLab token lacks permission': 'common.gitlabTokenLacksPermission',
   'GitLab project not found': 'common.gitlabProjectNotFound',
   'GitLab branch not found': 'common.gitlabBranchNotFound',
+  'GitLab issue not found': 'common.gitlabIssueNotFound',
   'GitLab is unavailable': 'common.gitlabIsUnavailable',
   'GitLab request failed': 'common.gitlabRequestFailed',
   'GitLab integration already exists': 'common.gitlabIntegrationAlreadyExists',
   'Default branch must be present': 'common.defaultBranchMustBePresent',
+  'Project is not linked to GitLab': 'common.projectIsNotLinkedToGitlab',
+  'Card is already linked to a GitLab issue': 'common.cardIsAlreadyLinkedToGitlabIssue',
+  'GitLab issue is already linked to another card':
+    'common.gitlabIssueIsAlreadyLinkedToAnotherCard',
+  'GitLab card link not found': 'common.cardIsNotLinkedToGitlabIssue',
   'Failed to fetch': 'common.noInternetConnection',
   'Network request failed': 'common.noInternetConnection',
 };

@@ -94,6 +94,8 @@ export default {
         '¿Estás seguro de que quieres eliminar este miembro del tablero?',
       areYouSureYouWantToRotateTheWebhookSecret:
         '¿Estás seguro de que quieres rotar el secreto del webhook? El secreto actual dejará de funcionar y tendrás que actualizarlo en GitLab.',
+      areYouSureYouWantToUnlinkThisCardFromGitlabIssue:
+        '¿Estás seguro de que quieres desvincular esta tarjeta del issue de GitLab? El issue se mantiene en GitLab.',
       areYouSureYouWantToUnlinkThisGitlabProject:
         '¿Estás seguro de que quieres desvincular el proyecto de GitLab de este proyecto?',
       assignAsOwner_title: 'Asignar como propietario',
@@ -122,7 +124,13 @@ export default {
         'Puede gestionar la configuración general del sistema y actuar como propietario del proyecto.',
       canOnlyViewBoard: 'Solo puede ver el tablero.',
       cardActions_title: 'Acciones de la tarjeta',
+      cardIsAlreadyLinkedToGitlabIssue: 'Esta tarjeta ya está vinculada a un issue de GitLab',
+      cardIsNotLinkedToGitlabIssue: 'Esta tarjeta no está vinculada a un issue de GitLab',
       cardNotFound_title: 'Tarjeta no encontrada',
+      cardWasMovedFromProjectLinkedToAnotherGitlabProject:
+        'Esta tarjeta se movió desde un proyecto vinculado a otro proyecto de GitLab.',
+      cardWasMovedFromProjectLinkedToGitlabProject:
+        'Esta tarjeta se movió desde el proyecto vinculado a {{project}}.',
       cardsOnThisListAreAvailableToAllBoardMembers:
         'Las tarjetas de esta lista están disponibles para todos los miembros del tablero.',
       cardsOnThisListAreCompleteAndReadyToBeArchived:
@@ -143,6 +151,7 @@ export default {
       copy_inline: 'copia',
       createBoard_title: 'Crear tablero',
       createCustomFieldGroup_title: 'Crear grupo de campos personalizados',
+      createGitlabIssue_title: 'Crear issue nuevo en GitLab',
       createLabel_title: 'Crear etiqueta',
       createNewOneOrSelectExistingOne: 'Crea uno nuevo o selecciona<br />uno existente.',
       createProject_title: 'Crear proyecto',
@@ -156,6 +165,19 @@ export default {
       customFields_title: 'Campos personalizados',
       discoverPlankaPro: '✨ Más funciones para tus tableros: Descubre PLANKA Pro',
       discoverPlankaPro_title: 'Descubre PLANKA Pro',
+      gitlabIssueClosed: 'Cerrada',
+      gitlabIssueIsAlreadyLinkedToAnotherCard:
+        'Este issue de GitLab ya está vinculado a otra tarjeta',
+      gitlabIssueNotFound: 'Issue de GitLab no encontrado',
+      gitlabIssueOpen: 'Abierta',
+      issueNumber: 'Número de issue',
+      issueNumberWithIid: 'Issue #{{iid}}',
+      linkGitlabIssue_title: 'Vincular issue existente de GitLab',
+      notLinkedToGitlabIssue: 'No está vinculada a un issue de GitLab',
+      projectIsNotLinkedToGitlab: 'Este proyecto no está vinculado a GitLab',
+      thisWillCreateIssueInGitlabProjectWithCardNameAndDescription:
+        'Se creará un issue nuevo en {{project}} con el nombre y la descripción de la tarjeta.',
+      unlinkGitlabIssue_title: 'Desvincular issue de GitLab',
       upgradeTeamToPro_title: 'Actualizar equipo a Pro',
       proFeatureCalendar: '✨ Vista de calendario para tus tableros',
       proFeatureRecurringCards: '✨ Tarjetas recurrentes y automatización',
@@ -453,6 +475,7 @@ export default {
       createBoard: 'Crear tablero',
       createCustomFieldGroup: 'Crear grupo de campos personalizados',
       createFile: 'Crear archivo',
+      createIssue: 'Crear issue nuevo',
       createLabel: 'Crear etiqueta',
       createNewLabel: 'Crear nueva etiqueta',
       createProject: 'Crear proyecto',
@@ -512,6 +535,8 @@ export default {
       leave: 'Abandonar',
       leaveBoard: 'Abandonar tablero',
       leaveProject: 'Abandonar proyecto',
+      link: 'Vincular',
+      linkIssue: 'Vincular issue existente',
       linkProject: 'Vincular proyecto',
       logOut_title: 'Cerrar sesión',
       makeCover_title: 'Hacer portada',
@@ -522,6 +547,7 @@ export default {
       move: 'Mover',
       moveCard_title: 'Mover tarjeta',
       moveList_title: 'Mover lista',
+      openInGitlab: 'Abrir en GitLab',
       regenerateApiKey: 'Regenerar clave API',
       remove: 'Eliminar',
       removeAssignee: 'Eliminar asignado',
@@ -549,6 +575,8 @@ export default {
       stop: 'Detener',
       subscribe: 'Suscribirse',
       testConnection: 'Probar conexión',
+      unlink: 'Desvincular',
+      unlinkGitlabIssue: 'Desvincular issue de GitLab',
       unlinkGitlabProject: 'Desvincular proyecto de GitLab',
       unlinkGitlabProject_title: 'Desvincular proyecto de GitLab',
       unsubscribe: 'Cancelar suscripción',

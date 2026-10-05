@@ -6,7 +6,7 @@ import { Button, Form, Input, Message } from 'semantic-ui-react';
 import selectors from '../../../../selectors';
 import entryActions from '../../../../entry-actions';
 import { useForm, useNestedRef } from '../../../../hooks';
-import getErrorMessage from './get-error-message';
+import getGitlabErrorMessage from '../../../../utils/get-gitlab-error-message';
 
 import styles from './LinkForm.module.scss';
 
@@ -82,7 +82,7 @@ const LinkForm = React.memo(() => {
         />
       </Form>
       {createError && (
-        <Message error content={getErrorMessage(createError, t)} className={styles.message} />
+        <Message error content={getGitlabErrorMessage(createError, t)} className={styles.message} />
       )}
     </>
   );
