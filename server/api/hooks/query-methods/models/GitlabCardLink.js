@@ -2,6 +2,11 @@
 
 const createOne = (values) => GitlabCardLink.create({ ...values }).fetch();
 
+const getByIntegrationId = (gitlabIntegrationId) =>
+  GitlabCardLink.find({
+    gitlabIntegrationId,
+  }).sort('id');
+
 const getOneById = (id) => GitlabCardLink.findOne(id);
 
 const getOneByCardId = (cardId) =>
@@ -27,6 +32,7 @@ const deleteOne = (criteria) => GitlabCardLink.destroyOne(criteria);
 
 module.exports = {
   createOne,
+  getByIntegrationId,
   getOneById,
   getOneByCardId,
   getOneByIntegrationIdAndIssueIid,

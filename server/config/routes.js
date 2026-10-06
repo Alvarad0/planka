@@ -157,6 +157,7 @@ module.exports.routes = {
   'POST /api/gitlab-integrations/:id/test-connection': 'gitlab-integrations/test-connection',
   'POST /api/gitlab-integrations/:id/rotate-webhook-secret':
     'gitlab-integrations/rotate-webhook-secret',
+  'POST /api/gitlab-integrations/:id/sync': 'gitlab-integrations/sync',
   'DELETE /api/gitlab-integrations/:id': 'gitlab-integrations/delete',
 
   'GET /api/cards/:id/gitlab': 'gitlab-card-links/show',
@@ -166,6 +167,9 @@ module.exports.routes = {
   'POST /api/cards/:id/gitlab-branch': 'gitlab-card-links/create-branch',
   'POST /api/cards/:id/gitlab-merge-request': 'gitlab-card-links/create-merge-request',
   'GET /api/cards/:id/gitlab-commits': 'gitlab-card-links/commits',
+  'POST /api/cards/:id/gitlab-sync': 'gitlab-card-links/sync',
+
+  'POST /api/gitlab/webhooks/:integrationId': 'gitlab-webhooks/receive',
 
   'POST /api/projects/:projectId/base-custom-field-groups': 'base-custom-field-groups/create',
   'PATCH /api/base-custom-field-groups/:id': 'base-custom-field-groups/update',

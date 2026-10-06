@@ -108,87 +108,19 @@
  */
 
 const { idInput } = require('../../../utils/inputs');
-const { ErrorCodes } = require('../../../utils/gitlab-client');
 const { isGitlabFailure } = require('../../../utils/gitlab-errors');
 const { buildBranchName } = require('../../../utils/git-branch-name');
+const { fetchSummary } = require('../../../utils/gitlab-summary');
 const {
   buildSnapshot,
   readSnapshot,
   buildIssueFromSnapshot,
-  selectMergeRequest,
 } = require('../../../utils/gitlab-snapshot');
 
 const Errors = {
   CARD_NOT_FOUND: {
     cardNotFound: 'Card not found',
   },
-};
-
-// Commits are counted up to this many; a full page means there are more
-const COMMITS_LIMIT = 100;
-
-// A deleted branch makes pipeline and commit lookups answer 404, which means there is no data
-// (the commit lookup may also answer with an empty list)
-const nullIfNotFound = (promise) =>
-  promise.catch((error) => {
-    if (error.code === ErrorCodes.NOT_FOUND) {
-      return null;
-    }
-
-    throw error;
-  });
-
-// All calls run in parallel and any failure rejects the whole summary, so the response is either
-// fully live or fully from the snapshot
-const fetchSummary = async (client, linkIntegration, gitlabCardLink) => {
-  const projectRef = linkIntegration.gitlabProjectId;
-  const { branchName } = gitlabCardLink;
-
-  if (!branchName) {
-    const issue = await client.getIssue(projectRef, gitlabCardLink.issueIid);
-
-    return {
-      issue,
-      mergeRequest: null,
-      pipeline: null,
-      commitsCount: null,
-      hasMoreCommits: false,
-    };
-  }
-
-  const [issue, mergeRequests, pipeline, commits] = await Promise.all([
-    client.getIssue(projectRef, gitlabCardLink.issueIid),
-    client.listMergeRequests(projectRef, {
-      sourceBranch: branchName,
-      state: 'all',
-    }),
-    nullIfNotFound(
-      client.getLatestPipeline(projectRef, {
-        ref: branchName,
-      }),
-    ),
-    nullIfNotFound(
-      client.listCommits(projectRef, {
-        from: linkIntegration.defaultBranch,
-        to: branchName,
-        limit: COMMITS_LIMIT,
-      }),
-    ),
-  ]);
-
-  const mergeRequest = selectMergeRequest(mergeRequests);
-
-  // Once merged, the branch has no commits ahead of the default branch (and may be deleted)
-  const isMerged = !!mergeRequest && mergeRequest.state === 'merged';
-  const hasCommits = !isMerged && !!commits;
-
-  return {
-    issue,
-    mergeRequest,
-    pipeline,
-    commitsCount: hasCommits ? commits.length : null,
-    hasMoreCommits: hasCommits && commits.length === COMMITS_LIMIT,
-  };
 };
 
 module.exports = {

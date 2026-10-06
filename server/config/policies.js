@@ -58,4 +58,6 @@ module.exports.policies = {
   'access-tokens/verify-totp': true,
   'access-tokens/accept-terms': true,
   'access-tokens/revoke-pending-token': true,
+  // Called by GitLab; verified with the integration's webhook secret instead of a session
+  'gitlab-webhooks/receive': true,
 };
