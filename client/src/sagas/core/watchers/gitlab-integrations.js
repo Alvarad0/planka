@@ -24,5 +24,8 @@ export default function* gitlabIntegrationsWatchers() {
     takeEvery(EntryActionTypes.GITLAB_INTEGRATION_WEBHOOK_SECRET_ROTATE, ({ payload: { id } }) =>
       services.rotateGitlabIntegrationWebhookSecret(id),
     ),
+    takeEvery(EntryActionTypes.GITLAB_INTEGRATION_SYNC, ({ payload: { id } }) =>
+      services.syncGitlabIntegration(id),
+    ),
   ]);
 }

@@ -137,6 +137,10 @@ export default {
         'Esta tarjeta se movió desde el proyecto vinculado a {{project}}.',
       cardWasMovedToProjectLinkedToAnotherGitlabProject:
         'Esta tarjeta se movió a un proyecto vinculado a otro proyecto de GitLab.',
+      cardsFailedToSynchronize_one: '{{count}} con error',
+      cardsFailedToSynchronize_other: '{{count}} con error',
+      cardsSynchronized_one: '{{count}} tarjeta sincronizada',
+      cardsSynchronized_other: '{{count}} tarjetas sincronizadas',
       cardsOnThisListAreAvailableToAllBoardMembers:
         'Las tarjetas de esta lista están disponibles para todos los miembros del tablero.',
       cardsOnThisListAreCompleteAndReadyToBeArchived:
@@ -267,6 +271,7 @@ export default {
         'Esta rama de GitLab ya está vinculada a otra tarjeta',
       gitlabBranchNotFound: 'Rama de GitLab no encontrada',
       gitlabIntegrationAlreadyExists: 'Este proyecto ya está vinculado a GitLab',
+      gitlabIntegrationNotFound: 'Integración de GitLab no encontrada',
       gitlabIsNotConfigured: 'GitLab no está configurado',
       gitlabIsUnavailable: 'GitLab no está disponible',
       gitlabMergeRequestClosed: 'Cerrado',
@@ -408,6 +413,7 @@ export default {
       story: 'Historia',
       subscribeToCardWhenCommenting: 'Suscribirse a la tarjeta al comentar',
       subscribeToMyOwnCardsByDefault: 'Suscribirse a mis propias tarjetas por defecto',
+      synchronized: 'Sincronizado',
       takenFromGitlabIfEmpty: 'Se toma de GitLab si se deja vacío',
       taskActions_title: 'Acciones de la tarea',
       taskAssignmentAndProjectCompletion: 'Asignación de tareas y finalización del proyecto.',
@@ -607,6 +613,8 @@ export default {
       start: 'Iniciar',
       stop: 'Detener',
       subscribe: 'Suscribirse',
+      synchronize: 'Sincronizar',
+      synchronizeAll: 'Sincronizar todo',
       testConnection: 'Probar conexión',
       unlink: 'Desvincular',
       unlinkGitlabIssue: 'Desvincular issue de GitLab',

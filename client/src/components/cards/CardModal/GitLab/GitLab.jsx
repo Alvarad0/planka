@@ -10,6 +10,7 @@ import { isListArchiveOrTrash } from '../../../../utils/record-helpers';
 import getGitlabErrorMessage from '../../../../utils/get-gitlab-error-message';
 import { BoardMembershipRoles } from '../../../../constants/Enums';
 import ConfirmationStep from '../../../common/ConfirmationStep';
+import TimeAgo from '../../../common/TimeAgo';
 import Commits from './Commits';
 import CreateBranchStep from './CreateBranchStep';
 import CreateIssueStep from './CreateIssueStep';
@@ -103,6 +104,8 @@ const GitLab = React.memo(() => {
     isProjectMismatch,
     isFetched,
     fetchError,
+    isSyncing,
+    syncError,
     isCreating,
     createError,
     isLinking,
@@ -139,6 +142,10 @@ const GitLab = React.memo(() => {
   useEffect(() => {
     dispatch(entryActions.fetchGitlabCardLinkInCurrentCard());
   }, [card.id, dispatch]);
+
+  const handleSyncClick = useCallback(() => {
+    dispatch(entryActions.syncGitlabCardLinkInCurrentCard());
+  }, [dispatch]);
 
   const handleCreateIssueConfirm = useCallback(() => {
     dispatch(entryActions.createGitlabIssueForCurrentCard());
@@ -194,9 +201,19 @@ const GitLab = React.memo(() => {
   }
 
   const isSubmitting =
-    isCreating || isLinking || isUnlinking || isCreatingBranch || isCreatingMergeRequest;
+    isCreating ||
+    isLinking ||
+    isUnlinking ||
+    isCreatingBranch ||
+    isCreatingMergeRequest ||
+    isSyncing;
   const requestError =
-    createError || linkError || unlinkError || createBranchError || createMergeRequestError;
+    createError ||
+    linkError ||
+    unlinkError ||
+    createBranchError ||
+    createMergeRequestError ||
+    syncError;
 
   // Actions that call GitLab are offered only for the link's own project and while it is reachable
   const canUseGitlab = canEdit && !isProjectMismatch && !isStale;
@@ -438,6 +455,23 @@ const GitLab = React.memo(() => {
                     className={styles.actionButton}
                   />
                 </ConfirmationPopup>
+              )}
+              {/* Not gated by staleness: retrying an unreachable GitLab is its main purpose */}
+              {canEdit && (
+                <Button
+                  type="button"
+                  icon={<Icon name="sync" loading={isSyncing} />}
+                  title={t('action.synchronize')}
+                  aria-label={t('action.synchronize')}
+                  disabled={isSubmitting}
+                  className={styles.copyButton}
+                  onClick={handleSyncClick}
+                />
+              )}
+              {!isStale && gitlabCardLink.lastSyncedAt && (
+                <span className={styles.syncedAt}>
+                  {t('common.synchronized')} <TimeAgo date={gitlabCardLink.lastSyncedAt} />
+                </span>
               )}
             </div>
           </>

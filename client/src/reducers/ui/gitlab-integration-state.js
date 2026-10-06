@@ -18,6 +18,10 @@ const initialState = {
   connectionTestResult: null,
   isWebhookSecretRotating: false,
   webhookSecretRotateError: null,
+  isSyncing: false,
+  // Counts of the last "Sync all": { syncedCount, failedCount }
+  syncResult: null,
+  syncError: null,
   isDeleting: false,
   deleteError: null,
 };
@@ -126,6 +130,28 @@ export default (state = initialState, { type, payload }) => {
         ...state,
         isWebhookSecretRotating: false,
         webhookSecretRotateError: payload.error,
+      };
+    case ActionTypes.GITLAB_INTEGRATION_SYNC:
+      return {
+        ...state,
+        isSyncing: true,
+        syncResult: null,
+        syncError: null,
+      };
+    case ActionTypes.GITLAB_INTEGRATION_SYNC__SUCCESS:
+      return {
+        ...state,
+        isSyncing: false,
+        syncResult: {
+          syncedCount: payload.syncedCount,
+          failedCount: payload.failedCount,
+        },
+      };
+    case ActionTypes.GITLAB_INTEGRATION_SYNC__FAILURE:
+      return {
+        ...state,
+        isSyncing: false,
+        syncError: payload.error,
       };
     case ActionTypes.GITLAB_INTEGRATION_DELETE:
       return {

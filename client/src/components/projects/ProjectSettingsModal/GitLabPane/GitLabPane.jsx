@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { Button, Divider, Header, Loader, Message, Tab } from 'semantic-ui-react';
+import { Button, Divider, Header, Icon, Loader, Message, Tab } from 'semantic-ui-react';
 
 import selectors from '../../../../selectors';
 import entryActions from '../../../../entry-actions';
@@ -22,6 +22,9 @@ const GitLabPane = React.memo(() => {
     fetchError,
     isConnectionTesting,
     connectionTestResult,
+    isSyncing,
+    syncResult,
+    syncError,
     isDeleting,
     deleteError,
   } = useSelector(selectors.selectGitlabIntegrationState);
@@ -35,6 +38,10 @@ const GitLabPane = React.memo(() => {
 
   const handleTestConnectionClick = useCallback(() => {
     dispatch(entryActions.testGitlabIntegrationConnection(gitlabIntegration.id));
+  }, [gitlabIntegration, dispatch]);
+
+  const handleSyncClick = useCallback(() => {
+    dispatch(entryActions.syncGitlabIntegration(gitlabIntegration.id));
   }, [gitlabIntegration, dispatch]);
 
   const handleUnlinkConfirm = useCallback(() => {
@@ -88,6 +95,13 @@ const GitLabPane = React.memo(() => {
         disabled={isConnectionTesting}
         onClick={handleTestConnectionClick}
       />
+      <Button
+        type="button"
+        icon={<Icon name="sync" loading={isSyncing} />}
+        content={t('action.synchronizeAll')}
+        disabled={isSyncing}
+        onClick={handleSyncClick}
+      />
       {connectionTestResult &&
         (connectionTestResult.error ? (
           <Message
@@ -104,6 +118,24 @@ const GitLabPane = React.memo(() => {
             className={styles.message}
           />
         ))}
+      {syncResult && (
+        <Message
+          positive={syncResult.failedCount === 0}
+          warning={syncResult.failedCount > 0}
+          content={[
+            t('common.cardsSynchronized', {
+              count: syncResult.syncedCount,
+            }),
+            t('common.cardsFailedToSynchronize', {
+              count: syncResult.failedCount,
+            }),
+          ].join(', ')}
+          className={styles.message}
+        />
+      )}
+      {syncError && (
+        <Message error content={getGitlabErrorMessage(syncError, t)} className={styles.message} />
+      )}
       {gitlabIntegration.lastSyncedAt && (
         <div className={styles.lastSynchronization}>
           {t('common.lastSynchronization', {

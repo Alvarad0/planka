@@ -138,6 +138,30 @@ rotateGitlabIntegrationWebhookSecret.failure = (id, error) => ({
   },
 });
 
+const syncGitlabIntegration = (id) => ({
+  type: ActionTypes.GITLAB_INTEGRATION_SYNC,
+  payload: {
+    id,
+  },
+});
+
+syncGitlabIntegration.success = (gitlabIntegration, syncedCount, failedCount) => ({
+  type: ActionTypes.GITLAB_INTEGRATION_SYNC__SUCCESS,
+  payload: {
+    gitlabIntegration,
+    syncedCount,
+    failedCount,
+  },
+});
+
+syncGitlabIntegration.failure = (id, error) => ({
+  type: ActionTypes.GITLAB_INTEGRATION_SYNC__FAILURE,
+  payload: {
+    id,
+    error,
+  },
+});
+
 export default {
   fetchGitlabIntegration,
   createGitlabIntegration,
@@ -145,4 +169,5 @@ export default {
   deleteGitlabIntegration,
   testGitlabIntegrationConnection,
   rotateGitlabIntegrationWebhookSecret,
+  syncGitlabIntegration,
 };

@@ -123,6 +123,26 @@ export function* rotateGitlabIntegrationWebhookSecret(id) {
   yield put(actions.rotateGitlabIntegrationWebhookSecret.success(gitlabIntegration));
 }
 
+export function* syncGitlabIntegration(id) {
+  yield put(actions.syncGitlabIntegration(id));
+
+  let gitlabIntegration;
+  let syncedCount;
+  let failedCount;
+
+  try {
+    ({
+      item: gitlabIntegration,
+      included: { syncedCount, failedCount },
+    } = yield call(request, api.syncGitlabIntegration, id));
+  } catch (error) {
+    yield put(actions.syncGitlabIntegration.failure(id, error));
+    return;
+  }
+
+  yield put(actions.syncGitlabIntegration.success(gitlabIntegration, syncedCount, failedCount));
+}
+
 export default {
   fetchGitlabIntegration,
   fetchGitlabIntegrationInCurrentProject,
@@ -132,4 +152,5 @@ export default {
   deleteGitlabIntegration,
   testGitlabIntegrationConnection,
   rotateGitlabIntegrationWebhookSecret,
+  syncGitlabIntegration,
 };

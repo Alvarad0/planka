@@ -5,6 +5,11 @@ const fetchGitlabCardLinkInCurrentCard = () => ({
   payload: {},
 });
 
+const syncGitlabCardLinkInCurrentCard = () => ({
+  type: EntryActionTypes.GITLAB_CARD_LINK_IN_CURRENT_CARD_SYNC,
+  payload: {},
+});
+
 const handleGitlabCardLinkCreate = (gitlabCardLink) => ({
   type: EntryActionTypes.GITLAB_CARD_LINK_CREATE_HANDLE,
   payload: {
@@ -62,6 +67,7 @@ const fetchGitlabCommitsInCurrentCard = () => ({
 
 export default {
   fetchGitlabCardLinkInCurrentCard,
+  syncGitlabCardLinkInCurrentCard,
   handleGitlabCardLinkCreate,
   handleGitlabCardLinkUpdate,
   handleGitlabCardLinkDelete,

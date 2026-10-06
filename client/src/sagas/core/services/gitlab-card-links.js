@@ -66,6 +66,66 @@ export function* fetchGitlabCardLinkInCurrentCard() {
   yield call(fetchGitlabCardLink, cardId);
 }
 
+export function* syncGitlabCardLink(cardId) {
+  yield put(actions.syncGitlabCardLink(cardId));
+
+  let gitlabCardLink;
+  let gitlabIntegration;
+  let gitlabIssue;
+  let gitlabMergeRequest;
+  let gitlabPipeline;
+  let commitsCount;
+  let hasMoreCommits;
+  let isStale;
+  let isProjectMismatch;
+  let suggestedBranchName;
+  let defaultBranch;
+
+  try {
+    ({
+      item: gitlabCardLink,
+      included: {
+        gitlabIntegration,
+        gitlabIssue,
+        gitlabMergeRequest,
+        gitlabPipeline,
+        commitsCount,
+        hasMoreCommits,
+        isStale,
+        isProjectMismatch,
+        suggestedBranchName,
+        defaultBranch,
+      },
+    } = yield call(request, api.syncGitlabCardLink, cardId));
+  } catch (error) {
+    yield put(actions.syncGitlabCardLink.failure(cardId, error));
+    return;
+  }
+
+  yield put(
+    actions.syncGitlabCardLink.success(
+      cardId,
+      gitlabCardLink,
+      gitlabIntegration,
+      gitlabIssue,
+      gitlabMergeRequest,
+      gitlabPipeline,
+      commitsCount,
+      hasMoreCommits,
+      isStale,
+      isProjectMismatch,
+      suggestedBranchName,
+      defaultBranch,
+    ),
+  );
+}
+
+export function* syncGitlabCardLinkInCurrentCard() {
+  const { cardId } = yield select(selectors.selectPath);
+
+  yield call(syncGitlabCardLink, cardId);
+}
+
 export function* handleGitlabCardLinkCreate(gitlabCardLink) {
   yield put(actions.handleGitlabCardLinkCreate(gitlabCardLink));
 }
@@ -257,6 +317,8 @@ export function* fetchGitlabCommitsInCurrentCard() {
 export default {
   fetchGitlabCardLink,
   fetchGitlabCardLinkInCurrentCard,
+  syncGitlabCardLink,
+  syncGitlabCardLinkInCurrentCard,
   handleGitlabCardLinkCreate,
   handleGitlabCardLinkUpdate,
   handleGitlabCardLinkDelete,

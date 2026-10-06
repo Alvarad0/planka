@@ -9,6 +9,7 @@ const ERROR_MESSAGE_KEYS = {
   'GitLab is unavailable': 'common.gitlabIsUnavailable',
   'GitLab request failed': 'common.gitlabRequestFailed',
   'GitLab integration already exists': 'common.gitlabIntegrationAlreadyExists',
+  'GitLab integration not found': 'common.gitlabIntegrationNotFound',
   'Default branch must be present': 'common.defaultBranchMustBePresent',
   'Project is not linked to GitLab': 'common.projectIsNotLinkedToGitlab',
   'Card is already linked to a GitLab issue': 'common.cardIsAlreadyLinkedToGitlabIssue',

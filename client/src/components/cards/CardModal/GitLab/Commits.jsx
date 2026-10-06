@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -21,14 +21,24 @@ const Commits = React.memo(({ count, hasMore, isExpandable }) => {
 
   const [isOpened, setIsOpened] = useState(false);
 
+  const isListShown = isExpandable && isOpened;
+
+  // The list is fetched when shown without data: when first opened, and again while open after
+  // a sync made the cached list outdated
+  useEffect(() => {
+    if (isListShown && !gitlabCommits && !isFetchingCommits && !commitsError) {
+      dispatch(entryActions.fetchGitlabCommitsInCurrentCard());
+    }
+  }, [isListShown, gitlabCommits, isFetchingCommits, commitsError, dispatch]);
+
   const handleToggleClick = useCallback(() => {
-    // The list is fetched when first opened, and again after a failed fetch
-    if (!isOpened && !gitlabCommits && !isFetchingCommits) {
+    // A failed fetch is retried when the list is opened again
+    if (!isOpened && commitsError && !isFetchingCommits) {
       dispatch(entryActions.fetchGitlabCommitsInCurrentCard());
     }
 
     setIsOpened(!isOpened);
-  }, [isOpened, gitlabCommits, isFetchingCommits, dispatch]);
+  }, [isOpened, commitsError, isFetchingCommits, dispatch]);
 
   const countContent = hasMore
     ? t('common.moreThanCommits', {
@@ -56,7 +66,7 @@ const Commits = React.memo(({ count, hasMore, isExpandable }) => {
           <span className={styles.text}>{countContent}</span>
         )}
       </div>
-      {isExpandable && isOpened && (
+      {isListShown && (
         <div className={styles.list}>
           {isFetchingCommits && <Loader active inline="centered" size="small" />}
           {!isFetchingCommits && commitsError && (

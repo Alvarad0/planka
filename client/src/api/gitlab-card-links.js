@@ -68,6 +68,9 @@ const transformBody = (body) => ({
 const getGitlabCardLink = (cardId, headers) =>
   socket.get(`/cards/${cardId}/gitlab`, undefined, headers).then(transformBody);
 
+const syncGitlabCardLink = (cardId, headers) =>
+  socket.post(`/cards/${cardId}/gitlab-sync`, undefined, headers).then(transformBody);
+
 const createGitlabIssueForCard = (cardId, headers) =>
   socket.post(`/cards/${cardId}/gitlab-issue`, undefined, headers).then(transformBody);
 
@@ -101,6 +104,7 @@ const makeHandleGitlabCardLinkDelete = makeHandleGitlabCardLinkCreate;
 
 export default {
   getGitlabCardLink,
+  syncGitlabCardLink,
   createGitlabIssueForCard,
   linkGitlabIssueToCard,
   unlinkGitlabIssueFromCard,

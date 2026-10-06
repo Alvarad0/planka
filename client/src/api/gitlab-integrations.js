@@ -55,6 +55,12 @@ const rotateGitlabIntegrationWebhookSecret = (id, headers) =>
       item: transformGitlabIntegration(body.item),
     }));
 
+const syncGitlabIntegration = (id, headers) =>
+  socket.post(`/gitlab-integrations/${id}/sync`, undefined, headers).then((body) => ({
+    ...body,
+    item: transformGitlabIntegration(body.item),
+  }));
+
 export default {
   getGitlabIntegration,
   createGitlabIntegration,
@@ -62,4 +68,5 @@ export default {
   deleteGitlabIntegration,
   testGitlabIntegrationConnection,
   rotateGitlabIntegrationWebhookSecret,
+  syncGitlabIntegration,
 };

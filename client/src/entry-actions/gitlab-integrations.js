@@ -41,6 +41,13 @@ const rotateGitlabIntegrationWebhookSecret = (id) => ({
   },
 });
 
+const syncGitlabIntegration = (id) => ({
+  type: EntryActionTypes.GITLAB_INTEGRATION_SYNC,
+  payload: {
+    id,
+  },
+});
+
 export default {
   fetchGitlabIntegrationInCurrentProject,
   createGitlabIntegrationInCurrentProject,
@@ -48,4 +55,5 @@ export default {
   deleteGitlabIntegration,
   testGitlabIntegrationConnection,
   rotateGitlabIntegrationWebhookSecret,
+  syncGitlabIntegration,
 };

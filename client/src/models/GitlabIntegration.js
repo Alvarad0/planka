@@ -52,6 +52,7 @@ export default class extends BaseModel {
       case ActionTypes.GITLAB_INTEGRATION_UPDATE__SUCCESS:
       case ActionTypes.GITLAB_INTEGRATION_CONNECTION_TEST__SUCCESS:
       case ActionTypes.GITLAB_INTEGRATION_WEBHOOK_SECRET_ROTATE__SUCCESS:
+      case ActionTypes.GITLAB_INTEGRATION_SYNC__SUCCESS:
         GitlabIntegration.upsert(payload.gitlabIntegration);
 
         break;

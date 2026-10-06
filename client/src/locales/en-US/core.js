@@ -137,6 +137,10 @@ export default {
         'This card was moved from the project linked to {{project}}.',
       cardWasMovedToProjectLinkedToAnotherGitlabProject:
         'This card was moved to a project linked to another GitLab project.',
+      cardsFailedToSynchronize_one: '{{count}} failed',
+      cardsFailedToSynchronize_other: '{{count}} failed',
+      cardsSynchronized_one: 'Synced {{count}} card',
+      cardsSynchronized_other: 'Synced {{count}} cards',
       cardsOnThisListAreAvailableToAllBoardMembers:
         'Cards on this list are available to all board members.',
       cardsOnThisListAreCompleteAndReadyToBeArchived:
@@ -309,6 +313,7 @@ export default {
         'This GitLab branch is already linked to another card',
       gitlabBranchNotFound: 'GitLab branch not found',
       gitlabIntegrationAlreadyExists: 'This project is already linked to GitLab',
+      gitlabIntegrationNotFound: 'GitLab integration not found',
       gitlabIsNotConfigured: 'GitLab is not configured',
       gitlabIsUnavailable: 'GitLab is unavailable',
       gitlabMergeRequestClosed: 'Closed',
@@ -448,6 +453,7 @@ export default {
       story: 'Story',
       subscribeToCardWhenCommenting: 'Subscribe to card when commenting',
       subscribeToMyOwnCardsByDefault: 'Subscribe to my own cards by default',
+      synchronized: 'Synced',
       takenFromGitlabIfEmpty: 'Taken from GitLab if empty',
       taskActions_title: 'Task Actions',
       taskAssignmentAndProjectCompletion: 'Task assignment and project completion.',
@@ -657,6 +663,8 @@ export default {
       stayLoggedIn: 'Stay logged in',
       stop: 'Stop',
       subscribe: 'Subscribe',
+      synchronize: 'Sync',
+      synchronizeAll: 'Sync all',
       testConnection: 'Test connection',
       unlink: 'Unlink',
       unlinkGitlabIssue: 'Unlink GitLab issue',

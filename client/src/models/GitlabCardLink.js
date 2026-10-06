@@ -48,6 +48,7 @@ export default class extends BaseModel {
         }
 
         break;
+      case ActionTypes.GITLAB_CARD_LINK_SYNC__SUCCESS:
       case ActionTypes.GITLAB_ISSUE_FOR_CARD_CREATE__SUCCESS:
       case ActionTypes.GITLAB_ISSUE_TO_CARD_LINK__SUCCESS:
       case ActionTypes.GITLAB_CARD_LINK_CREATE_HANDLE:

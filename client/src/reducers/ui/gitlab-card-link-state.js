@@ -16,12 +16,18 @@ const initialState = {
   hasMoreCommits: false,
   isStale: false,
   isProjectMismatch: false,
+  // Link's sync time and branch the data above was read for, used to tell whether a link update
+  // pushed by the server (e.g. after a webhook) holds newer data
+  lastSyncedAt: null,
+  branchName: null,
   // Prefilled values of the "Create branch" form, computed by the server
   suggestedBranchName: null,
   defaultBranch: null,
   isFetching: false,
   isFetched: false,
   fetchError: null,
+  isSyncing: false,
+  syncError: null,
   isCreating: false,
   createError: null,
   isLinking: false,
@@ -56,7 +62,73 @@ const resetIssue = (state) => ({
   gitlabIssue: null,
   isStale: false,
   isProjectMismatch: false,
+  lastSyncedAt: null,
+  branchName: null,
 });
+
+const getTime = (date) => (date ? date.getTime() : null);
+
+// Data of a fetched or synchronized link, as both respond the same way
+const applyFetchedData = (state, payload) => ({
+  ...state,
+  gitlabIntegration: payload.gitlabIntegration,
+  gitlabIssue: payload.gitlabIssue,
+  gitlabMergeRequest: payload.gitlabMergeRequest,
+  gitlabPipeline: payload.gitlabPipeline,
+  commitsCount: payload.commitsCount,
+  hasMoreCommits: payload.hasMoreCommits,
+  isStale: payload.isStale,
+  isProjectMismatch: payload.isProjectMismatch,
+  lastSyncedAt: payload.gitlabCardLink ? payload.gitlabCardLink.lastSyncedAt : null,
+  branchName: payload.gitlabCardLink ? payload.gitlabCardLink.branchName : null,
+  suggestedBranchName: payload.suggestedBranchName,
+  defaultBranch: payload.defaultBranch,
+});
+
+// A link update of the current card replaces the shown data when it carries a newer snapshot
+// (written by a sync, which reads everything from GitLab). Updates with an older or equal sync
+// time are ignored, as they may arrive out of order or echo data already shown.
+const applyLinkUpdate = (state, gitlabCardLink) => {
+  let nextState = state;
+
+  if (gitlabCardLink.branchName !== state.branchName) {
+    nextState = {
+      ...resetBranchData(nextState),
+      branchName: gitlabCardLink.branchName,
+    };
+  }
+
+  const lastSyncedAt = getTime(gitlabCardLink.lastSyncedAt);
+
+  if (lastSyncedAt === null || lastSyncedAt <= getTime(state.lastSyncedAt)) {
+    return nextState;
+  }
+
+  // The snapshot is normalized by the API layer
+  const { snapshot } = gitlabCardLink;
+
+  return {
+    ...nextState,
+    gitlabIssue: {
+      id: gitlabCardLink.issueId,
+      iid: gitlabCardLink.issueIid,
+      title: snapshot.issue.title || null,
+      state: snapshot.issue.state || null,
+      webUrl: gitlabCardLink.issueUrl,
+      updatedAt: snapshot.issue.updatedAt || null,
+    },
+    gitlabMergeRequest: snapshot.mergeRequest,
+    gitlabPipeline: snapshot.pipeline,
+    commitsCount: snapshot.commitsCount,
+    hasMoreCommits: snapshot.hasMoreCommits,
+    isStale: false,
+    lastSyncedAt: gitlabCardLink.lastSyncedAt,
+    // The cached commits may be outdated, they are fetched again when shown
+    gitlabCommits: null,
+    isFetchingCommits: false,
+    commitsError: null,
+  };
+};
 
 // eslint-disable-next-line default-param-last
 export default (state = initialState, { type, payload }) => {
@@ -76,17 +148,7 @@ export default (state = initialState, { type, payload }) => {
       }
 
       return {
-        ...state,
-        gitlabIntegration: payload.gitlabIntegration,
-        gitlabIssue: payload.gitlabIssue,
-        gitlabMergeRequest: payload.gitlabMergeRequest,
-        gitlabPipeline: payload.gitlabPipeline,
-        commitsCount: payload.commitsCount,
-        hasMoreCommits: payload.hasMoreCommits,
-        isStale: payload.isStale,
-        isProjectMismatch: payload.isProjectMismatch,
-        suggestedBranchName: payload.suggestedBranchName,
-        defaultBranch: payload.defaultBranch,
+        ...applyFetchedData(state, payload),
         isFetching: false,
         isFetched: true,
       };
@@ -110,6 +172,51 @@ export default (state = initialState, { type, payload }) => {
         isFetched: true,
         fetchError: payload.error,
       };
+    case ActionTypes.GITLAB_CARD_LINK_SYNC:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        isSyncing: true,
+        createError: null,
+        linkError: null,
+        unlinkError: null,
+        createBranchError: null,
+        createMergeRequestError: null,
+        syncError: null,
+      };
+    case ActionTypes.GITLAB_CARD_LINK_SYNC__SUCCESS:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...applyFetchedData(state, payload),
+        isSyncing: false,
+        // The cached commits may be outdated, they are fetched again when shown
+        gitlabCommits: null,
+        isFetchingCommits: false,
+        commitsError: null,
+      };
+    case ActionTypes.GITLAB_CARD_LINK_SYNC__FAILURE:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        isSyncing: false,
+        syncError: payload.error,
+      };
+    case ActionTypes.GITLAB_CARD_LINK_UPDATE_HANDLE:
+      // Ignored until the section shows data of the link's card
+      if (payload.gitlabCardLink.cardId !== state.cardId || !state.isFetched) {
+        return state;
+      }
+
+      return applyLinkUpdate(state, payload.gitlabCardLink);
     case ActionTypes.GITLAB_CARD_LINK_CREATE_HANDLE:
     case ActionTypes.GITLAB_CARD_LINK_DELETE_HANDLE:
       if (payload.gitlabCardLink.cardId !== state.cardId) {
@@ -130,6 +237,7 @@ export default (state = initialState, { type, payload }) => {
         unlinkError: null,
         createBranchError: null,
         createMergeRequestError: null,
+        syncError: null,
       };
     case ActionTypes.GITLAB_ISSUE_FOR_CARD_CREATE__SUCCESS:
     case ActionTypes.GITLAB_ISSUE_TO_CARD_LINK__SUCCESS:
@@ -142,6 +250,8 @@ export default (state = initialState, { type, payload }) => {
         gitlabIssue: payload.gitlabIssue,
         isStale: false,
         isProjectMismatch: false,
+        lastSyncedAt: payload.gitlabCardLink.lastSyncedAt,
+        branchName: payload.gitlabCardLink.branchName,
         suggestedBranchName: payload.suggestedBranchName,
         defaultBranch: payload.defaultBranch,
         isCreating: false,
@@ -170,6 +280,7 @@ export default (state = initialState, { type, payload }) => {
         unlinkError: null,
         createBranchError: null,
         createMergeRequestError: null,
+        syncError: null,
       };
     case ActionTypes.GITLAB_ISSUE_TO_CARD_LINK__FAILURE:
       if (payload.cardId !== state.cardId) {
@@ -194,6 +305,7 @@ export default (state = initialState, { type, payload }) => {
         unlinkError: null,
         createBranchError: null,
         createMergeRequestError: null,
+        syncError: null,
       };
     case ActionTypes.GITLAB_ISSUE_FROM_CARD_UNLINK__SUCCESS:
       if (payload.cardId !== state.cardId) {
@@ -235,6 +347,7 @@ export default (state = initialState, { type, payload }) => {
         unlinkError: null,
         createBranchError: null,
         createMergeRequestError: null,
+        syncError: null,
       };
     case ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE__SUCCESS:
       if (payload.cardId !== state.cardId) {
@@ -243,6 +356,7 @@ export default (state = initialState, { type, payload }) => {
 
       return {
         ...resetBranchData(state),
+        branchName: payload.gitlabCardLink.branchName,
         isCreatingBranch: false,
       };
     case ActionTypes.GITLAB_BRANCH_FOR_CARD_CREATE__FAILURE:
@@ -268,6 +382,7 @@ export default (state = initialState, { type, payload }) => {
         unlinkError: null,
         createBranchError: null,
         createMergeRequestError: null,
+        syncError: null,
       };
     case ActionTypes.GITLAB_MERGE_REQUEST_FOR_CARD_CREATE__SUCCESS:
       if (payload.cardId !== state.cardId) {

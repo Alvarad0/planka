@@ -8,6 +8,9 @@ export default function* gitlabCardLinksWatchers() {
     takeEvery(EntryActionTypes.GITLAB_CARD_LINK_IN_CURRENT_CARD_FETCH, () =>
       services.fetchGitlabCardLinkInCurrentCard(),
     ),
+    takeEvery(EntryActionTypes.GITLAB_CARD_LINK_IN_CURRENT_CARD_SYNC, () =>
+      services.syncGitlabCardLinkInCurrentCard(),
+    ),
     takeEvery(EntryActionTypes.GITLAB_CARD_LINK_CREATE_HANDLE, ({ payload: { gitlabCardLink } }) =>
       services.handleGitlabCardLinkCreate(gitlabCardLink),
     ),

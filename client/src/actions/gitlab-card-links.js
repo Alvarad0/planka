@@ -46,6 +46,53 @@ fetchGitlabCardLink.failure = (cardId, error) => ({
   },
 });
 
+const syncGitlabCardLink = (cardId) => ({
+  type: ActionTypes.GITLAB_CARD_LINK_SYNC,
+  payload: {
+    cardId,
+  },
+});
+
+// Same payload as a fetch success: a sync responds like getting the card's GitLab data
+syncGitlabCardLink.success = (
+  cardId,
+  gitlabCardLink,
+  gitlabIntegration,
+  gitlabIssue,
+  gitlabMergeRequest,
+  gitlabPipeline,
+  commitsCount,
+  hasMoreCommits,
+  isStale,
+  isProjectMismatch,
+  suggestedBranchName,
+  defaultBranch,
+) => ({
+  type: ActionTypes.GITLAB_CARD_LINK_SYNC__SUCCESS,
+  payload: {
+    cardId,
+    gitlabCardLink,
+    gitlabIntegration,
+    gitlabIssue,
+    gitlabMergeRequest,
+    gitlabPipeline,
+    commitsCount,
+    hasMoreCommits,
+    isStale,
+    isProjectMismatch,
+    suggestedBranchName,
+    defaultBranch,
+  },
+});
+
+syncGitlabCardLink.failure = (cardId, error) => ({
+  type: ActionTypes.GITLAB_CARD_LINK_SYNC__FAILURE,
+  payload: {
+    cardId,
+    error,
+  },
+});
+
 const handleGitlabCardLinkCreate = (gitlabCardLink) => ({
   type: ActionTypes.GITLAB_CARD_LINK_CREATE_HANDLE,
   payload: {
@@ -236,6 +283,7 @@ fetchGitlabCommits.failure = (cardId, error) => ({
 
 export default {
   fetchGitlabCardLink,
+  syncGitlabCardLink,
   handleGitlabCardLinkCreate,
   handleGitlabCardLinkUpdate,
   handleGitlabCardLinkDelete,
