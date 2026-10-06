@@ -171,6 +171,10 @@ module.exports.routes = {
 
   'POST /api/gitlab/webhooks/:integrationId': 'gitlab-webhooks/receive',
 
+  'GET /api/cards/:id/card-relationships': 'card-relationships/index',
+  'POST /api/cards/:cardId/card-relationships': 'card-relationships/create',
+  'DELETE /api/card-relationships/:id': 'card-relationships/delete',
+
   'POST /api/projects/:projectId/base-custom-field-groups': 'base-custom-field-groups/create',
   'PATCH /api/base-custom-field-groups/:id': 'base-custom-field-groups/update',
   'DELETE /api/base-custom-field-groups/:id': 'base-custom-field-groups/delete',
