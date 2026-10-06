@@ -47,6 +47,31 @@ const getOneByIntegrationIdAndBranchName = (gitlabIntegrationId, branchName) =>
 
 const updateOne = (criteria, values) => GitlabCardLink.updateOne(criteria).set({ ...values });
 
+// Updates a link and returns it along with the snapshot it held right before the update. The row
+// is locked while doing so, so concurrent updates each see the snapshot written by the other one.
+// `criteria` must contain the link `id`; `gitlabCardLink` is undefined when it matched nothing.
+const updateOneWithPrevSnapshot = (criteria, values) =>
+  sails.getDatastore().transaction(async (db) => {
+    const queryResult = await sails
+      .sendNativeQuery('SELECT snapshot FROM gitlab_card_link WHERE id = $1 FOR UPDATE', [
+        criteria.id,
+      ])
+      .usingConnection(db);
+
+    if (queryResult.rowCount === 0) {
+      return {};
+    }
+
+    const gitlabCardLink = await GitlabCardLink.updateOne(criteria)
+      .set({ ...values })
+      .usingConnection(db);
+
+    return {
+      gitlabCardLink,
+      prevSnapshot: queryResult.rows[0].snapshot,
+    };
+  });
+
 const deleteOne = (criteria) => GitlabCardLink.destroyOne(criteria);
 
 module.exports = {
@@ -58,5 +83,6 @@ module.exports = {
   getOneByIntegrationIdAndIssueIid,
   getOneByIntegrationIdAndBranchName,
   updateOne,
+  updateOneWithPrevSnapshot,
   deleteOne,
 };

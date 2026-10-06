@@ -27,7 +27,8 @@ const defaultFind = (criteria) => User.find(criteria).sort('id');
 const createOne = async (values) => {
   const { activeUsersLimit } = await InternalConfig.qm.getOneMain();
 
-  if (activeUsersLimit !== null) {
+  // A deactivated user does not count towards the limit (e.g. the GitLab Bridge bot user)
+  if (activeUsersLimit !== null && !values.isDeactivated) {
     return sails.getDatastore().transaction(async (db) => {
       const queryResult = await sails
         .sendNativeQuery('SELECT NULL FROM user_account WHERE is_deactivated = $1 FOR UPDATE', [

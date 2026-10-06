@@ -140,7 +140,7 @@ module.exports = {
   async fn(inputs) {
     const { currentUser } = this.req;
 
-    const { card, gitlabIntegration, gitlabCardLink } =
+    const { card, board, gitlabIntegration, gitlabCardLink } =
       await sails.helpers.gitlabCardLinks.getCardContext
         .with({
           currentUser,
@@ -205,9 +205,15 @@ module.exports = {
     }
 
     if (summary) {
-      const updatedGitlabCardLink = await GitlabCardLink.qm.updateOne(gitlabCardLink.id, {
-        snapshot: buildSnapshot(summary),
-        lastSyncedAt: new Date().toISOString(),
+      // May move the card when the merge request changed (e.g. it was merged)
+      const updatedGitlabCardLink = await sails.helpers.gitlabCardLinks.updateOne.with({
+        board,
+        record: gitlabCardLink,
+        values: {
+          snapshot: buildSnapshot(summary),
+          lastSyncedAt: new Date().toISOString(),
+        },
+        isBroadcastSkipped: true,
       });
 
       // The link may have been removed concurrently; still answer with what was read
