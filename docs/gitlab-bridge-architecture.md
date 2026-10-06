@@ -229,7 +229,7 @@ Why respond first: GitLab auto-disables webhooks that time out or fail repeatedl
 ### 5.3 Retry and repair
 
 - There is **no job queue** in Planka, so there are no in-process retries. A failed delivery is repaired by the **periodic sync**, which reconciles each linked card against GitLab.
-- Sync hook: every N minutes (env `GITLAB_SYNC_INTERVAL`) it processes linked cards whose `last_synced_at` is older than a threshold, in batches. It takes a Postgres advisory lock so that only one process syncs if Planka is ever scaled horizontally.
+- Sync hook (`api/hooks/gitlab-sync`): every N minutes (env `GITLAB_SYNC_INTERVAL`, default 10, `0` disables it) it re-syncs up to 50 linked cards whose `last_synced_at` is older than N minutes (never synced first, then least recently synced), 4 at a time, through the same coalesced sync as webhooks. It stops starting new cards after 3 consecutive "GitLab unavailable/unauthorized" failures, marks integrations with at least one synced card as synced, and prunes webhook deliveries older than `GITLAB_WEBHOOK_DELIVERY_RETENTION_DAYS` (default 30, `0` keeps them). It takes a transaction-scoped Postgres advisory lock (`pg_try_advisory_xact_lock`) so that only one process syncs if Planka is ever scaled horizontally; it does nothing when GitLab is not configured and never runs its timer in the test environment.
 - Manual repair: `POST /api/cards/:id/gitlab-sync` and `POST /api/gitlab-integrations/:id/sync`.
 
 > **Target GitLab 17.5.** HMAC signing tokens (`webhook-signature`) only exist from GitLab 19.0, so `X-Gitlab-Token` is the only option. GitLab disables a webhook temporarily after 4 consecutive failures and permanently after 40, which is why step 5 responds before processing. After upgrading GitLab to ≥ 19.0, switch to signing tokens.
@@ -336,7 +336,7 @@ Rules:
 ### 8.4 Docker
 
 - **One custom image** built from this fork: `docker build -t <registry>/planka:2.2.1-gitlab.1 .`. The production `docker-compose.yml` then points `image:` to it, **pinned, never `:latest`**.
-- New env vars: `GITLAB_URL`, `GITLAB_TOKEN__FILE`, `GITLAB_SYNC_INTERVAL`.
+- New env vars: `GITLAB_URL`, `GITLAB_TOKEN__FILE`, `GITLAB_SYNC_INTERVAL` (minutes, default `10`, `0` disables the periodic sync), `GITLAB_WEBHOOK_DELIVERY_RETENTION_DAYS` (default `30`, `0` disables pruning). Invalid values (not a non-negative integer, or too large) log a warning on startup and fall back to the default.
 - Outgoing proxy: `start.sh` starts Squid with `OUTGOING_BLOCKED_HOSTS=localhost,postgres`. The GitLab host must be **reachable** through it, which matters if it is on a private network. Verify this in Phase 1.
 - Inbound: GitLab must reach `BASE_URL/api/gitlab/webhooks/:id`, so check the reverse proxy and firewall between the two servers.
 

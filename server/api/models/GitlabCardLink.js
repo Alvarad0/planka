@@ -265,6 +265,11 @@ module.exports = {
       type: 'ref',
       columnName: 'last_synced_at',
     },
+    // Internal (periodic sync queue order), never presented to clients
+    lastSyncAttemptedAt: {
+      type: 'ref',
+      columnName: 'last_sync_attempted_at',
+    },
 
     //  ╔═╗╔╦╗╔╗ ╔═╗╔╦╗╔═╗
     //  ║╣ ║║║╠╩╗║╣  ║║╚═╗

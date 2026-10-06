@@ -1,4 +1,5 @@
-// Holds no secrets today; kept so every GitLab Bridge record goes through a presenter.
+// Holds no secrets today; kept so every GitLab Bridge record goes through a presenter. It hides
+// internal fields.
 module.exports = {
   sync: true,
 
@@ -10,8 +11,7 @@ module.exports = {
   },
 
   fn(inputs) {
-    return {
-      ...inputs.record,
-    };
+    // lastSyncAttemptedAt is internal to the periodic sync
+    return _.omit(inputs.record, ['lastSyncAttemptedAt']);
   },
 };

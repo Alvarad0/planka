@@ -15,6 +15,7 @@ const sails = require('sails');
 
 const version = require('../version');
 const { normalizeGitlabUrl } = require('../utils/gitlab-url');
+const { parseGitlabSyncConfig } = require('../utils/gitlab-sync-config');
 
 const envToNumber = (value) => {
   if (!value) {
@@ -28,6 +29,8 @@ const envToNumber = (value) => {
 const envToBytes = (value) => bytes(value);
 
 const envToArray = (value) => (value ? value.split(',') : []);
+
+const gitlabSyncConfig = parseGitlabSyncConfig(process.env);
 
 const baseUrl = envToArray(process.env.BASE_URL)[0];
 const parsedBasedUrl = new URL(baseUrl);
@@ -89,7 +92,12 @@ module.exports.custom = {
   // GitLab Bridge. The token must never be presented to clients or written to logs.
   gitlabUrl: normalizeGitlabUrl(process.env.GITLAB_URL),
   gitlabToken: process.env.GITLAB_TOKEN && process.env.GITLAB_TOKEN.trim(),
-  gitlabSyncInterval: envToNumber(process.env.GITLAB_SYNC_INTERVAL) || 10, // In minutes
+  // Periodic sync (gitlab-sync hook): every N minutes (0 disables it), re-syncs links not synced
+  // for N minutes and prunes webhook deliveries older than the retention (0 disables pruning)
+  gitlabSyncInterval: gitlabSyncConfig.gitlabSyncInterval, // In minutes
+  gitlabWebhookDeliveryRetentionDays: gitlabSyncConfig.gitlabWebhookDeliveryRetentionDays,
+  // Invalid values of the settings above, logged by the gitlab-sync hook (no logger here yet)
+  gitlabSyncConfigWarnings: gitlabSyncConfig.warnings,
 
   /* Internal */
 
