@@ -171,6 +171,12 @@ module.exports.routes = {
 
   'POST /api/gitlab/webhooks/:integrationId': 'gitlab-webhooks/receive',
 
+  'GET /api/cards/:id/knowledge-transfers': 'knowledge-transfers/index',
+  'POST /api/cards/:id/knowledge-transfers': 'knowledge-transfers/create',
+  'GET /api/cards/:id/knowledge-transfer-candidates': 'knowledge-transfers/candidates',
+  'PATCH /api/knowledge-transfers/:id': 'knowledge-transfers/update',
+  'DELETE /api/knowledge-transfers/:id': 'knowledge-transfers/delete',
+
   'POST /api/projects/:projectId/base-custom-field-groups': 'base-custom-field-groups/create',
   'PATCH /api/base-custom-field-groups/:id': 'base-custom-field-groups/update',
   'DELETE /api/base-custom-field-groups/:id': 'base-custom-field-groups/delete',
