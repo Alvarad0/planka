@@ -23,7 +23,6 @@ import TaskLists from './TaskLists';
 import CustomFieldGroups from './CustomFieldGroups';
 import Communication from './Communication';
 import GitLab from './GitLab';
-import Relationships from './Relationships';
 import CreationDetailsStep from './CreationDetailsStep';
 import MoreActionsStep from './MoreActionsStep';
 import DueDateChip from '../DueDateChip';
@@ -543,7 +542,6 @@ const ProjectContent = React.memo(() => {
             </div>
           )}
           <GitLab />
-          <Relationships />
           <div className={styles.contentModule}>
             <div className={styles.moduleWrapper}>
               <Icon name="list ul" className={styles.moduleIcon} />

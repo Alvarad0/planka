@@ -12,7 +12,6 @@ import smtpTestState from './smtp-test-state';
 import userTrustedDevicesState from './user-trusted-devices-state';
 import gitlabIntegrationState from './gitlab-integration-state';
 import gitlabCardLinkState from './gitlab-card-link-state';
-import cardRelationshipState from './card-relationship-state';
 
 export default combineReducers({
   authenticateForm,
@@ -22,5 +21,4 @@ export default combineReducers({
   userTrustedDevicesState,
   gitlabIntegrationState,
   gitlabCardLinkState,
-  cardRelationshipState,
 });

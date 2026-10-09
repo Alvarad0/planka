@@ -32,7 +32,6 @@ export default {
       addCustomField_title: 'Añadir campo personalizado',
       addManager_title: 'Añadir gestor',
       addMember_title: 'Añadir miembro',
-      addRelationship_title: 'Añadir relación',
       addTaskList_title: 'Añadir lista de tareas',
       addUser_title: 'Añadir usuario',
       admin: 'Administrador',
@@ -93,8 +92,6 @@ export default {
         '¿Estás seguro de que quieres eliminar este gestor del proyecto?',
       areYouSureYouWantToRemoveThisMemberFromBoard:
         '¿Estás seguro de que quieres eliminar este miembro del tablero?',
-      areYouSureYouWantToRemoveThisRelationship:
-        '¿Estás seguro de que quieres eliminar esta relación? Las tarjetas no se modifican.',
       areYouSureYouWantToRotateTheWebhookSecret:
         '¿Estás seguro de que quieres rotar el secreto del webhook? El secreto actual dejará de funcionar y tendrás que actualizarlo en GitLab.',
       areYouSureYouWantToUnlinkThisCardFromGitlabIssue:
@@ -109,9 +106,6 @@ export default {
       background: 'Fondo',
       baseCustomFields_title: 'Campos personalizados base',
       baseGroup: 'Grupo base',
-      blockedByOpenCards_one: 'Bloqueada por {{count}} tarjeta abierta',
-      blockedByOpenCards_other: 'Bloqueada por {{count}} tarjetas abiertas',
-      blocks: 'Bloquea a',
       board: 'Tablero',
       boardActions_title: 'Acciones del tablero',
       boardNotFound_title: 'Tablero no encontrado',
@@ -129,18 +123,14 @@ export default {
       canManageSystemWideSettingsAndActAsProjectOwner:
         'Puede gestionar la configuración general del sistema y actuar como propietario del proyecto.',
       canOnlyViewBoard: 'Solo puede ver el tablero.',
-      card: 'Tarjeta',
       cardActions_title: 'Acciones de la tarjeta',
       baseBranch: 'Rama base',
       branchName: 'Nombre de la rama',
       cardAlreadyHasGitlabBranch: 'Esta tarjeta ya tiene una rama de GitLab',
-      cardCannotBeRelatedToItself: 'Una tarjeta no puede relacionarse consigo misma',
       cardHasNoGitlabBranch: 'Esta tarjeta no tiene una rama de GitLab',
       cardIsAlreadyLinkedToGitlabIssue: 'Esta tarjeta ya está vinculada a un issue de GitLab',
       cardIsNotLinkedToGitlabIssue: 'Esta tarjeta no está vinculada a un issue de GitLab',
       cardNotFound_title: 'Tarjeta no encontrada',
-      cardRelationshipAlreadyExists: 'Estas tarjetas ya están relacionadas',
-      cardsMustBelongToSameProject: 'Solo se pueden relacionar tarjetas del mismo proyecto',
       cardWasMovedFromProjectLinkedToAnotherGitlabProject:
         'Esta tarjeta se movió desde un proyecto vinculado a otro proyecto de GitLab.',
       cardWasMovedFromProjectLinkedToGitlabProject:
@@ -157,7 +147,6 @@ export default {
         'Las tarjetas de esta lista están completas y listas para ser archivadas.',
       cardsOnThisListAreReadyToBeWorkedOn:
         'Las tarjetas de esta lista están listas para trabajar en ellas.',
-      cardWithoutAccess: 'Tarjeta sin acceso',
       clickHereOrRefreshPageToUpdate: '<0>Haz clic aquí</0> o actualiza la página para actualizar.',
       clientHostnameInEhlo: 'Nombre del host del cliente en EHLO',
       closed: 'Cerrado',
@@ -187,7 +176,6 @@ export default {
       customFieldGroups_title: 'Grupos de campos personalizados',
       customField_title: 'Campo personalizado',
       customFields_title: 'Campos personalizados',
-      dependsOn: 'Depende de',
       discoverPlankaPro: '✨ Más funciones para tus tableros: Descubre PLANKA Pro',
       discoverPlankaPro_title: 'Descubre PLANKA Pro',
       gitlabIssueClosed: 'Cerrado',
@@ -198,17 +186,8 @@ export default {
       issueNumber: 'Número de issue',
       issueNumberWithIid: 'Issue #{{iid}}',
       linkGitlabIssue_title: 'Vincular issue existente de GitLab',
-      notEnoughRightsToRelateCards:
-        'Necesitas permisos de editor en los tableros de ambas tarjetas',
       notLinkedToGitlabIssue: 'No está vinculada a un issue de GitLab',
       projectIsNotLinkedToGitlab: 'Este proyecto no está vinculado a GitLab',
-      relatedCardNotFound: 'No se encontró la tarjeta seleccionada',
-      relatedTo: 'Relacionada con',
-      relationships_title: 'Relaciones',
-      relationshipType: 'Tipo de relación',
-      relationshipWouldCreateDependencyCycle: 'Esta relación crearía un ciclo de dependencias',
-      removeRelationship_title: 'Eliminar relación',
-      subtaskOf: 'Subtarea de',
       thisWillCreateIssueInGitlabProjectWithCardNameAndDescription:
         'Se creará un issue nuevo en {{project}} con el nombre y la descripción de la tarjeta.',
       unlinkGitlabIssue_title: 'Desvincular issue de GitLab',
@@ -513,7 +492,6 @@ export default {
       addList: 'Añadir lista',
       addMember: 'Añadir miembro',
       addMoreDetailedDescription: 'Añadir una descripción más detallada',
-      addRelationship: 'Añadir relación',
       addTask: 'Añadir tarea',
       addTaskList: 'Añadir lista de tareas',
       addToCard: 'Añadir a tarjeta',
@@ -618,7 +596,6 @@ export default {
       removeFromProject: 'Eliminar del proyecto',
       removeManager: 'Eliminar gestor',
       removeMember: 'Eliminar miembro',
-      removeRelationship: 'Eliminar relación',
       restoreToList: 'Restaurar a {{list}}',
       returnToBoard: 'Volver al tablero',
       rotateSecret: 'Rotar secreto',

@@ -27,7 +27,6 @@ export default {
       addCustomField_title: 'Add Custom Field',
       addManager_title: 'Add Manager',
       addMember_title: 'Add Member',
-      addRelationship_title: 'Add Relationship',
       addTaskList_title: 'Add Task List',
       addUser_title: 'Add User',
       admin: 'Admin',
@@ -84,8 +83,6 @@ export default {
         'Are you sure you want to remove this manager from the project?',
       areYouSureYouWantToRemoveThisMemberFromBoard:
         'Are you sure you want to remove this member from the board?',
-      areYouSureYouWantToRemoveThisRelationship:
-        'Are you sure you want to remove this relationship? The cards stay as they are.',
       areYouSureYouWantToRotateTheWebhookSecret:
         'Are you sure you want to rotate the webhook secret? The current secret will stop working and you will need to update it in GitLab.',
       areYouSureYouWantToUnlinkThisCardFromGitlabIssue:
@@ -109,9 +106,6 @@ export default {
       background: 'Background',
       baseCustomFields_title: 'Base Custom Fields',
       baseGroup: 'Base group',
-      blockedByOpenCards_one: 'Blocked by {{count}} open card',
-      blockedByOpenCards_other: 'Blocked by {{count}} open cards',
-      blocks: 'Blocks',
       board: 'Board',
       boardActions_title: 'Board Actions',
       boardNotFound_title: 'Board Not Found',
@@ -129,18 +123,14 @@ export default {
       canManageSystemWideSettingsAndActAsProjectOwner:
         'Can manage the system wide settings and act as project owner.',
       canOnlyViewBoard: 'Can only view the board.',
-      card: 'Card',
       cardActions_title: 'Card Actions',
       baseBranch: 'Base branch',
       branchName: 'Branch name',
       cardAlreadyHasGitlabBranch: 'This card already has a GitLab branch',
-      cardCannotBeRelatedToItself: 'A card cannot be related to itself',
       cardHasNoGitlabBranch: 'This card has no GitLab branch',
       cardIsAlreadyLinkedToGitlabIssue: 'This card is already linked to a GitLab issue',
       cardIsNotLinkedToGitlabIssue: 'This card is not linked to a GitLab issue',
       cardNotFound_title: 'Card Not Found',
-      cardRelationshipAlreadyExists: 'These cards are already related',
-      cardsMustBelongToSameProject: 'Only cards of the same project can be related',
       cardWasMovedFromProjectLinkedToAnotherGitlabProject:
         'This card was moved from a project linked to another GitLab project.',
       cardWasMovedFromProjectLinkedToGitlabProject:
@@ -156,7 +146,6 @@ export default {
       cardsOnThisListAreCompleteAndReadyToBeArchived:
         'Cards on this list are complete and ready to be archived.',
       cardsOnThisListAreReadyToBeWorkedOn: 'Cards on this list are ready to be worked on.',
-      cardWithoutAccess: 'Card without access',
       clickHereOrRefreshPageToUpdate: '<0>Click here</0> or refresh the page to update.',
       clientHostnameInEhlo: 'Client hostname in EHLO',
       closed: 'Closed',
@@ -189,7 +178,6 @@ export default {
       customFields_title: 'Custom Fields',
       customerPanel_title: 'Customer Panel',
       dangerZone_title: 'Danger Zone',
-      dependsOn: 'Depends on',
       disable2fa_title: 'Disable Two-Factor Authentication',
       disable2faWarning:
         'You will need to confirm your current password and a TOTP code. Existing sessions stay signed in.',
@@ -214,7 +202,6 @@ export default {
       lastUsed: 'Last used',
       linkGitlabIssue_title: 'Link GitLab Issue',
       never: 'Never',
-      notEnoughRightsToRelateCards: 'You need editor rights on the boards of both cards',
       noTrustedDevices: 'No trusted devices.',
       notLinkedToGitlabIssue: 'Not linked to a GitLab issue',
       orEnterSecretManually: 'Or enter this secret manually:',
@@ -229,12 +216,6 @@ export default {
       regenerateRecoveryCodes_title: 'Regenerate Recovery Codes',
       regenerateRecoveryCodesIntro:
         'Generating new codes will invalidate all existing recovery codes.',
-      relatedCardNotFound: 'The selected card was not found',
-      relatedTo: 'Related to',
-      relationships_title: 'Relationships',
-      relationshipType: 'Relationship type',
-      relationshipWouldCreateDependencyCycle: 'This relationship would create a dependency cycle',
-      removeRelationship_title: 'Remove Relationship',
       reset2fa_title: 'Reset 2FA',
       reset2faWarning:
         'Resetting 2FA signs the user out of all sessions and removes their TOTP setup. They will need to set it up again on next login.',
@@ -242,7 +223,6 @@ export default {
       scanQrCodeWithApp:
         'Scan this QR code with an authenticator app such as Google Authenticator or Authy.',
       security_title: 'Security',
-      subtaskOf: 'Subtask of',
       thisWillCreateIssueInGitlabProjectWithCardNameAndDescription:
         'This will create an issue in {{project}} with the card name and description.',
       totpCode: 'TOTP code',
@@ -550,7 +530,6 @@ export default {
       addList: 'Add list',
       addMember: 'Add member',
       addMoreDetailedDescription: 'Add more detailed description',
-      addRelationship: 'Add relationship',
       addTask: 'Add task',
       addTaskList: 'Add task list',
       addToCard: 'Add to card',
@@ -664,7 +643,6 @@ export default {
       removeFromProject: 'Remove from project',
       removeManager: 'Remove manager',
       removeMember: 'Remove member',
-      removeRelationship: 'Remove relationship',
       reset2fa: 'Reset 2FA',
       restoreToList: 'Restore to {{list}}',
       returnToBoard: 'Return to board',
