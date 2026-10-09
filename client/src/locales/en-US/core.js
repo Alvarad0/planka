@@ -27,6 +27,7 @@ export default {
       addCustomField_title: 'Add Custom Field',
       addManager_title: 'Add Manager',
       addMember_title: 'Add Member',
+      addPerson_title: 'Add Person',
       addTaskList_title: 'Add Task List',
       addUser_title: 'Add User',
       admin: 'Admin',
@@ -83,6 +84,7 @@ export default {
         'Are you sure you want to remove this manager from the project?',
       areYouSureYouWantToRemoveThisMemberFromBoard:
         'Are you sure you want to remove this member from the board?',
+      areYouSureYouWantToRemoveThisPerson: 'Are you sure you want to remove this person?',
       areYouSureYouWantToRotateTheWebhookSecret:
         'Are you sure you want to rotate the webhook secret? The current secret will stop working and you will need to update it in GitLab.',
       areYouSureYouWantToUnlinkThisCardFromGitlabIssue:
@@ -191,6 +193,9 @@ export default {
       enterTotpOrRecoveryCode:
         'Enter the 6-digit code from your authenticator app, or one of your recovery codes (xxxxx-xxxxx).',
       expires: 'Expires',
+      explained: 'Explained',
+      explainedByUserOnDate: 'Explained by {{name}}, {{date}}',
+      explainedOnDate: 'Explained, {{date}}',
       gitlabIssueClosed: 'Closed',
       gitlabIssueIsAlreadyLinkedToAnotherCard:
         'This GitLab issue is already linked to another card',
@@ -199,12 +204,17 @@ export default {
       invalidTotpCode: 'Invalid TOTP or recovery code',
       issueNumber: 'Issue number',
       issueNumberWithIid: 'Issue #{{iid}}',
+      knowledgeTransferIsLocked: 'It is already marked as explained and cannot be changed',
+      knowledgeTransfer_title: 'Knowledge Transfer',
       lastUsed: 'Last used',
       linkGitlabIssue_title: 'Link GitLab Issue',
       never: 'Never',
+      noOneMustLearnThisYet: 'No one has been assigned to learn this yet.',
+      noOneToAdd: 'No one else to add',
       noTrustedDevices: 'No trusted devices.',
       notLinkedToGitlabIssue: 'Not linked to a GitLab issue',
       orEnterSecretManually: 'Or enter this secret manually:',
+      personWasAlreadyRemovedFromKnowledgeTransfer: 'This person was already removed',
       projectIsNotLinkedToGitlab: 'This project is not linked to GitLab',
       recoveryCodesExhausted:
         'All recovery codes have been used. Regenerate a new set to keep a fallback in case you lose your authenticator app.',
@@ -216,6 +226,7 @@ export default {
       regenerateRecoveryCodes_title: 'Regenerate Recovery Codes',
       regenerateRecoveryCodesIntro:
         'Generating new codes will invalidate all existing recovery codes.',
+      removePerson_title: 'Remove Person',
       reset2fa_title: 'Reset 2FA',
       reset2faWarning:
         'Resetting 2FA signs the user out of all sessions and removes their TOTP setup. They will need to set it up again on next login.',
@@ -477,6 +488,9 @@ export default {
       uploadFailedNotEnoughStorageSpace: 'Upload failed: Not enough storage space.',
       uploadedImages: 'Uploaded images',
       url: 'URL',
+      userIsAlreadyAssignedToKnowledgeTransfer: 'This person is already assigned',
+      userIsDeactivated: 'This user is deactivated',
+      userNotFound: 'User not found',
       useSecureConnection: 'Use secure connection',
       userActions_title: 'User Actions',
       userAddedCardToList: '<0>{{user}}</0> added <2>{{card}}</2> to {{list}}',
@@ -530,6 +544,7 @@ export default {
       addList: 'Add list',
       addMember: 'Add member',
       addMoreDetailedDescription: 'Add more detailed description',
+      addPerson: 'Add person',
       addTask: 'Add task',
       addTaskList: 'Add task list',
       addToCard: 'Add to card',
@@ -643,6 +658,7 @@ export default {
       removeFromProject: 'Remove from project',
       removeManager: 'Remove manager',
       removeMember: 'Remove member',
+      removePerson: 'Remove person',
       reset2fa: 'Reset 2FA',
       restoreToList: 'Restore to {{list}}',
       returnToBoard: 'Return to board',

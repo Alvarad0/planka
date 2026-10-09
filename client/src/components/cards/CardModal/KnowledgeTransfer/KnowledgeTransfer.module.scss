@@ -1,0 +1,117 @@
+:global(#app) {
+  .actionButton {
+    background: rgba(9, 30, 66, 0.04);
+    box-shadow: 0 1px 0 rgba(9, 30, 66, 0.25);
+    color: #6b808c;
+    font-weight: normal;
+    margin: 0 8px 0 0;
+    padding: 6px 12px;
+    transition: none;
+
+    &:hover {
+      background: rgba(9, 30, 66, 0.08);
+      color: #092d42;
+    }
+  }
+
+  .actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .contentModule {
+    margin-bottom: 24px;
+  }
+
+  .item {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    min-height: 36px;
+    padding: 2px 0;
+  }
+
+  .itemAvatar {
+    flex-shrink: 0;
+  }
+
+  .itemCheckbox {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .itemContent {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .itemExplanation {
+    color: #6b808c;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .itemName {
+    color: #17394d;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .message {
+    margin-top: 12px;
+  }
+
+  .moduleHeader {
+    color: #17394d;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1.5;
+    margin: 0 0 4px;
+    padding: 6px 0;
+    word-wrap: break-word;
+  }
+
+  .moduleIcon {
+    color: #17394d;
+    font-size: 17px;
+    height: 32px;
+    left: -40px;
+    line-height: 32px;
+    margin-right: 0;
+    position: absolute;
+    top: 2px;
+    width: 32px;
+  }
+
+  .moduleWrapper {
+    margin: 0 0 0 40px;
+    position: relative;
+  }
+
+  .removeButton {
+    background: transparent;
+    color: #6b808c;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 4px;
+
+    &:hover {
+      background: rgba(9, 30, 66, 0.08);
+      color: #092d42;
+    }
+  }
+
+  .text {
+    color: #6b808c;
+  }
+}

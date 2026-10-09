@@ -17,6 +17,7 @@ import backgroundImages from './background-images';
 import baseCustomFieldGroups from './base-custom-field-groups';
 import gitlabIntegrations from './gitlab-integrations';
 import gitlabCardLinks from './gitlab-card-links';
+import knowledgeTransfers from './knowledge-transfers';
 import boards from './boards';
 import boardMemberships from './board-memberships';
 import labels from './labels';
@@ -48,6 +49,7 @@ export default [
   baseCustomFieldGroups,
   gitlabIntegrations,
   gitlabCardLinks,
+  knowledgeTransfers,
   boards,
   boardMemberships,
   labels,

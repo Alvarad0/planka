@@ -23,6 +23,7 @@ import Thumbnail from './Thumbnail';
 import CustomFieldGroups from './CustomFieldGroups';
 import Communication from './Communication';
 import GitLab from './GitLab';
+import KnowledgeTransfer from './KnowledgeTransfer';
 import CreationDetailsStep from './CreationDetailsStep';
 import MoreActionsStep from './MoreActionsStep';
 import Markdown from '../../common/Markdown';
@@ -465,6 +466,7 @@ const StoryContent = React.memo(() => {
             </div>
           )}
           <GitLab />
+          <KnowledgeTransfer />
           <div className={styles.contentModule}>
             <div className={styles.moduleWrapper}>
               <Icon name="list ul" className={styles.moduleIcon} />

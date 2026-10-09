@@ -11,6 +11,7 @@ import BackgroundImage from './BackgroundImage';
 import BaseCustomFieldGroup from './BaseCustomFieldGroup';
 import GitlabIntegration from './GitlabIntegration';
 import GitlabCardLink from './GitlabCardLink';
+import KnowledgeTransfer from './KnowledgeTransfer';
 import Board from './Board';
 import BoardMembership from './BoardMembership';
 import Label from './Label';
@@ -36,6 +37,7 @@ export {
   BaseCustomFieldGroup,
   GitlabIntegration,
   GitlabCardLink,
+  KnowledgeTransfer,
   Board,
   BoardMembership,
   Label,

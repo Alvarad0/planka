@@ -235,6 +235,22 @@ const createSocketEventsChannel = () =>
       emit(entryActions.handleGitlabCardLinkDelete(item));
     });
 
+    const handleKnowledgeTransferCreate = api.makeHandleKnowledgeTransferCreate(
+      ({ item, included: { users } }) => {
+        emit(entryActions.handleKnowledgeTransferCreate(item, users));
+      },
+    );
+
+    const handleKnowledgeTransferUpdate = api.makeHandleKnowledgeTransferUpdate(
+      ({ item, included: { users } }) => {
+        emit(entryActions.handleKnowledgeTransferUpdate(item, users));
+      },
+    );
+
+    const handleKnowledgeTransferDelete = api.makeHandleKnowledgeTransferDelete(({ item }) => {
+      emit(entryActions.handleKnowledgeTransferDelete(item));
+    });
+
     const handleCustomFieldGroupCreate = ({ item }) => {
       emit(entryActions.handleCustomFieldGroupCreate(item));
     };
@@ -381,6 +397,10 @@ const createSocketEventsChannel = () =>
     socket.on('gitlabCardLinkUpdate', handleGitlabCardLinkUpdate);
     socket.on('gitlabCardLinkDelete', handleGitlabCardLinkDelete);
 
+    socket.on('knowledgeTransferCreate', handleKnowledgeTransferCreate);
+    socket.on('knowledgeTransferUpdate', handleKnowledgeTransferUpdate);
+    socket.on('knowledgeTransferDelete', handleKnowledgeTransferDelete);
+
     socket.on('customFieldGroupCreate', handleCustomFieldGroupCreate);
     socket.on('customFieldGroupUpdate', handleCustomFieldGroupUpdate);
     socket.on('customFieldGroupDelete', handleCustomFieldGroupDelete);
@@ -481,6 +501,10 @@ const createSocketEventsChannel = () =>
       socket.off('gitlabCardLinkCreate', handleGitlabCardLinkCreate);
       socket.off('gitlabCardLinkUpdate', handleGitlabCardLinkUpdate);
       socket.off('gitlabCardLinkDelete', handleGitlabCardLinkDelete);
+
+      socket.off('knowledgeTransferCreate', handleKnowledgeTransferCreate);
+      socket.off('knowledgeTransferUpdate', handleKnowledgeTransferUpdate);
+      socket.off('knowledgeTransferDelete', handleKnowledgeTransferDelete);
 
       socket.off('customFieldGroupCreate', handleCustomFieldGroupCreate);
       socket.off('customFieldGroupUpdate', handleCustomFieldGroupUpdate);
