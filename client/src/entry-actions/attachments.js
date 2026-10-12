@@ -5,10 +5,13 @@
 
 import EntryActionTypes from '../constants/EntryActionTypes';
 
-const createAttachmentInCurrentCard = (data) => ({
+// `callbacks` ({ onSuccess(attachment), onFailure(error) }) is optional and lets
+// non-redux consumers (e.g. the markdown editor image upload) await the result
+const createAttachmentInCurrentCard = (data, callbacks) => ({
   type: EntryActionTypes.ATTACHMENT_IN_CURRENT_CARD_CREATE,
   payload: {
     data,
+    callbacks,
   },
 });
 

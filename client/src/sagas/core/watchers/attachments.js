@@ -10,8 +10,9 @@ import EntryActionTypes from '../../../constants/EntryActionTypes';
 
 export default function* attachmentsWatchers() {
   yield all([
-    takeEvery(EntryActionTypes.ATTACHMENT_IN_CURRENT_CARD_CREATE, ({ payload: { data } }) =>
-      services.createAttachmentInCurrentCard(data),
+    takeEvery(
+      EntryActionTypes.ATTACHMENT_IN_CURRENT_CARD_CREATE,
+      ({ payload: { data, callbacks } }) => services.createAttachmentInCurrentCard(data, callbacks),
     ),
     takeEvery(EntryActionTypes.ATTACHMENT_CREATE_HANDLE, ({ payload: { attachment, requestId } }) =>
       services.handleAttachmentCreate(attachment, requestId),

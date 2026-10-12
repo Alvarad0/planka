@@ -26,6 +26,7 @@ import GitLab from './GitLab';
 import KnowledgeTransfer from './KnowledgeTransfer';
 import CreationDetailsStep from './CreationDetailsStep';
 import MoreActionsStep from './MoreActionsStep';
+import uploadImageAsAttachment from './upload-image-as-attachment';
 import DueDateChip from '../DueDateChip';
 import StopwatchChip from '../StopwatchChip';
 import EditDueDateStep from '../EditDueDateStep';
@@ -163,6 +164,11 @@ const ProjectContent = React.memo(() => {
         }),
       );
     },
+    [dispatch],
+  );
+
+  const handleDescriptionImageUpload = useCallback(
+    (file) => uploadImageAsAttachment(dispatch, file),
     [dispatch],
   );
 
@@ -503,6 +509,7 @@ const ProjectContent = React.memo(() => {
                         placeholder="common.enterDescription"
                         onUpdate={handleDescriptionUpdate}
                         onClose={handleEditDescriptionClose}
+                        onImageUpload={canAddAttachment ? handleDescriptionImageUpload : undefined}
                       />
                     )}
                     {!isEditDescriptionOpened &&

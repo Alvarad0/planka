@@ -26,6 +26,7 @@ import GitLab from './GitLab';
 import KnowledgeTransfer from './KnowledgeTransfer';
 import CreationDetailsStep from './CreationDetailsStep';
 import MoreActionsStep from './MoreActionsStep';
+import uploadImageAsAttachment from './upload-image-as-attachment';
 import Markdown from '../../common/Markdown';
 import EditMarkdown from '../../common/EditMarkdown';
 import ConfirmationStep from '../../common/ConfirmationStep';
@@ -158,6 +159,11 @@ const StoryContent = React.memo(() => {
         }),
       );
     },
+    [dispatch],
+  );
+
+  const handleDescriptionImageUpload = useCallback(
+    (file) => uploadImageAsAttachment(dispatch, file),
     [dispatch],
   );
 
@@ -409,6 +415,7 @@ const StoryContent = React.memo(() => {
                         placeholder="common.enterDescription"
                         onUpdate={handleDescriptionUpdate}
                         onClose={handleEditDescriptionClose}
+                        onImageUpload={canAddAttachment ? handleDescriptionImageUpload : undefined}
                       />
                     ) : (
                       <>

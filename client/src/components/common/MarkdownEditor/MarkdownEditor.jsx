@@ -3,7 +3,7 @@
  * Licensed under the Fair Use License: https://github.com/plankanban/planka/blob/master/LICENSE.md
  */
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import {
@@ -17,6 +17,7 @@ import { ActionName } from '@gravity-ui/markdown-editor/_/bundle/config/action-n
 /* eslint-enable import/no-unresolved */
 
 import { EditorModes } from '../../../constants/Enums';
+import { createFileUploadHandler } from './file-upload';
 
 import styles from './MarkdownEditor.module.scss';
 
@@ -43,25 +44,30 @@ const commandMenuActions = wysiwygToolbarConfigs.wCommandMenuConfig.filter(
   (action) => !removedActionNamesSet.has(action.id),
 );
 
-export const fileToBase64Data = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-  });
-
-const fileUploadHandler = async (file) => {
-  const base64Data = await fileToBase64Data(file);
-  return { url: base64Data };
-};
-
 const MarkdownEditor = React.forwardRef(
   (
-    { defaultValue, defaultMode, isError, onChange, onSubmit, onCancel, onModeChange, ...props },
+    {
+      defaultValue,
+      defaultMode,
+      isError,
+      onChange,
+      onSubmit,
+      onCancel,
+      onModeChange,
+      onImageUpload,
+      ...props
+    },
     ref,
   ) => {
     const wrapperRef = useRef(null);
+
+    // The editor instance is created once, so the upload handler reads the latest prop via a ref
+    const onImageUploadRef = useRef(onImageUpload);
+    onImageUploadRef.current = onImageUpload;
+
+    const [fileUploadHandler] = useState(() =>
+      createFileUploadHandler(() => onImageUploadRef.current),
+    );
 
     const handleWrapperRef = useCallback(
       (element) => {
@@ -175,12 +181,14 @@ MarkdownEditor.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   onModeChange: PropTypes.func,
+  onImageUpload: PropTypes.func,
 };
 
 MarkdownEditor.defaultProps = {
   defaultMode: EditorModes.WYSIWYG,
   isError: false,
   onModeChange: undefined,
+  onImageUpload: undefined,
 };
 
 export default React.memo(MarkdownEditor);

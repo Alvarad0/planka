@@ -58,6 +58,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': PROXY_TARGET,
+      '/attachments': PROXY_TARGET, // also covers /attachments/:id/download/thumbnails/*
       '/socket.io': { target: PROXY_TARGET, ws: true },
     },
   },

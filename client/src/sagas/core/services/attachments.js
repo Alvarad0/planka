@@ -16,7 +16,7 @@ import { createLocalId } from '../../../utils/local-id';
 import { AttachmentTypes } from '../../../constants/Enums';
 import ToastTypes from '../../../constants/ToastTypes';
 
-export function* createAttachment(cardId, data) {
+export function* createAttachment(cardId, data, callbacks) {
   const localId = yield call(createLocalId);
   const currentUserId = yield select(selectors.selectCurrentUserId);
 
@@ -59,16 +59,24 @@ export function* createAttachment(cardId, data) {
       }
     }
 
+    if (callbacks && callbacks.onFailure) {
+      yield call(callbacks.onFailure, error);
+    }
+
     return;
   }
 
   yield put(actions.createAttachment.success(localId, attachment));
+
+  if (callbacks && callbacks.onSuccess) {
+    yield call(callbacks.onSuccess, attachment);
+  }
 }
 
-export function* createAttachmentInCurrentCard(data) {
+export function* createAttachmentInCurrentCard(data, callbacks) {
   const { cardId } = yield select(selectors.selectPath);
 
-  yield call(createAttachment, cardId, data);
+  yield call(createAttachment, cardId, data, callbacks);
 }
 
 export function* handleAttachmentCreate(attachment, requestId) {
