@@ -55,6 +55,14 @@ const CustomFieldEditor = React.forwardRef(({ data, onFieldChange }, ref) => {
         className={classNames(styles.field, styles.fieldRadio)}
         onChange={onFieldChange}
       />
+      <Radio
+        toggle
+        name="suggestValues"
+        checked={data.suggestValues}
+        label={t('common.suggestUsedValues')}
+        className={classNames(styles.field, styles.fieldRadio)}
+        onChange={onFieldChange}
+      />
     </>
   );
 });

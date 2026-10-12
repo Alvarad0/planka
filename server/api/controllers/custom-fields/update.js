@@ -41,6 +41,10 @@
  *                 type: boolean
  *                 description: Whether to show the field on the front of cards
  *                 example: false
+ *               suggestValues:
+ *                 type: boolean
+ *                 description: Whether to suggest values already used in this field on other cards
+ *                 example: false
  *     responses:
  *       200:
  *         description: Custom field updated successfully
@@ -92,6 +96,9 @@ module.exports = {
     showOnFrontOfCard: {
       type: 'boolean',
     },
+    suggestValues: {
+      type: 'boolean',
+    },
   },
 
   exits: {
@@ -113,7 +120,7 @@ module.exports = {
     let { customField } = pathToProject;
     const { customFieldGroup, card, list, board, baseCustomFieldGroup, project } = pathToProject;
 
-    const values = _.pick(inputs, ['position', 'name', 'showOnFrontOfCard']);
+    const values = _.pick(inputs, ['position', 'name', 'showOnFrontOfCard', 'suggestValues']);
 
     if (customField.baseCustomFieldGroupId) {
       const isProjectManager = await sails.helpers.users.isProjectManager(

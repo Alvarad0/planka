@@ -23,6 +23,7 @@ const CustomFieldAddStep = React.memo(({ customFieldGroupId, defaultData, onBack
   const [data, handleFieldChange] = useForm(() => ({
     name: '',
     showOnFrontOfCard: false,
+    suggestValues: false,
     ...defaultData,
   }));
 

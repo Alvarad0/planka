@@ -424,6 +424,7 @@ export default {
       story: 'Historia',
       subscribeToCardWhenCommenting: 'Suscribirse a la tarjeta al comentar',
       subscribeToMyOwnCardsByDefault: 'Suscribirse a mis propias tarjetas por defecto',
+      suggestUsedValues: 'Sugerir valores usados',
       synchronized: 'Sincronizado',
       takenFromGitlabIfEmpty: 'Se toma de GitLab si se deja vacío',
       taskActions_title: 'Acciones de la tarea',

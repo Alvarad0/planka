@@ -464,6 +464,7 @@ export default {
       story: 'Story',
       subscribeToCardWhenCommenting: 'Subscribe to card when commenting',
       subscribeToMyOwnCardsByDefault: 'Subscribe to my own cards by default',
+      suggestUsedValues: 'Suggest used values',
       synchronized: 'Synced',
       takenFromGitlabIfEmpty: 'Taken from GitLab if empty',
       taskActions_title: 'Task Actions',

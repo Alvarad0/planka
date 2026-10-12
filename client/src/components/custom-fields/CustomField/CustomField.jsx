@@ -22,6 +22,11 @@ const CustomField = React.memo(({ id, customFieldGroupId }) => {
   const selectCustomFieldValueById = useMemo(() => selectors.makeSelectCustomFieldValueById(), []);
   const selectListById = useMemo(() => selectors.makeSelectListById(), []);
 
+  const selectUsedValuesByCustomFieldId = useMemo(
+    () => selectors.makeSelectUsedValuesByCustomFieldId(),
+    [],
+  );
+
   const { cardId } = useSelector(selectors.selectPath);
   const customField = useSelector((state) => selectCustomFieldById(state, id));
 
@@ -34,6 +39,10 @@ const CustomField = React.memo(({ id, customFieldGroupId }) => {
         customFieldId: id,
       }),
     ),
+  );
+
+  const usedValues = useSelector((state) =>
+    customField.suggestValues ? selectUsedValuesByCustomFieldId(state, id, cardId) : undefined,
   );
 
   const canEdit = useSelector((state) => {
@@ -86,6 +95,7 @@ const CustomField = React.memo(({ id, customFieldGroupId }) => {
         {canEdit ? (
           <ValueField
             defaultValue={customFieldValue && customFieldValue.content}
+            suggestions={usedValues}
             disabled={!customField.isPersisted}
             onUpdate={handleValueUpdate}
           />

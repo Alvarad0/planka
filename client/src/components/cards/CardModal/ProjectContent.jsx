@@ -483,6 +483,7 @@ const ProjectContent = React.memo(() => {
               )}
             </div>
           )}
+          <CustomFieldGroups />
           {(card.description || canEditDescription) && (
             <div className={classNames(styles.contentModule, styles.contentModuleDescription)}>
               <div className={styles.moduleWrapper}>
@@ -531,7 +532,6 @@ const ProjectContent = React.memo(() => {
               </div>
             </div>
           )}
-          <CustomFieldGroups />
           <TaskLists />
           {attachmentIds.length > 0 && (
             <div className={styles.contentModule}>

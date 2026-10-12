@@ -7,7 +7,11 @@
   .field input {
     background: rgba(9, 30, 66, 0.04);
     border: 1px solid transparent;
+    font-size: 12px;
+    // The theme forces `line-height: 20px` and `padding: 8px 12px` on every input with !important
+    line-height: 16px !important;
     overflow: hidden;
+    padding: 6px 8px !important;
     text-overflow: ellipsis;
 
     &:focus {

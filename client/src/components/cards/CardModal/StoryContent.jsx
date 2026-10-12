@@ -397,6 +397,7 @@ const StoryContent = React.memo(() => {
                 )}
               </div>
             )}
+            <CustomFieldGroups />
             {(card.description || canEditDescription) && (
               <div className={classNames(styles.contentModule, styles.contentModuleDescription)}>
                 <div className={styles.moduleWrapper}>
@@ -455,7 +456,6 @@ const StoryContent = React.memo(() => {
               </div>
             )}
           </Gallery>
-          <CustomFieldGroups />
           {attachmentIds.length > 0 && (
             <div className={styles.contentModule}>
               <div className={styles.moduleWrapper}>

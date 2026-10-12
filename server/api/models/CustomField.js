@@ -23,6 +23,7 @@
  *         - position
  *         - name
  *         - showOnFrontOfCard
+ *         - suggestValues
  *         - createdAt
  *         - updatedAt
  *       properties:
@@ -52,6 +53,11 @@
  *           type: boolean
  *           default: false
  *           description: Whether to show the field on the front of cards
+ *           example: false
+ *         suggestValues:
+ *           type: boolean
+ *           default: false
+ *           description: Whether to suggest values already used in this field on other cards
  *           example: false
  *         createdAt:
  *           type: string
@@ -85,6 +91,11 @@ module.exports = {
       type: 'boolean',
       defaultsTo: false,
       columnName: 'show_on_front_of_card',
+    },
+    suggestValues: {
+      type: 'boolean',
+      defaultsTo: false,
+      columnName: 'suggest_values',
     },
 
     //  ╔═╗╔╦╗╔╗ ╔═╗╔╦╗╔═╗
