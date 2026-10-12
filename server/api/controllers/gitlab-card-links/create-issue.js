@@ -41,7 +41,7 @@
  *                       $ref: '#/components/schemas/GitlabIssue'
  *                     suggestedBranchName:
  *                       type: string
- *                       description: Branch name suggested for the card (`<issue IID>-<slug of the card name>`)
+ *                       description: Branch name suggested for the card (`<issue IID>-<slug of the card's "ID" custom field, or of the card name when it is missing or empty>`)
  *                       example: 12-implement-login
  *                     defaultBranch:
  *                       type: string
@@ -171,7 +171,10 @@ module.exports = {
       item: sails.helpers.gitlabCardLinks.presentOne(nextGitlabCardLink),
       included: {
         gitlabIssue,
-        suggestedBranchName: buildBranchName(gitlabIssue.iid, card.name),
+        suggestedBranchName: buildBranchName(
+          gitlabIssue.iid,
+          await sails.helpers.gitlabCardLinks.getBranchNameSource(card),
+        ),
         defaultBranch: gitlabIntegration.defaultBranch,
       },
     };

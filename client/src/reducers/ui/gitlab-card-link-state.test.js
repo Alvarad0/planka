@@ -186,4 +186,48 @@ describe('gitlab card link state', () => {
     expect(nextState.gitlabCommits).toBeNull();
     expect(nextState.lastSyncedAt).toEqual(new Date('2026-10-06T10:05:00Z'));
   });
+
+  test('applies a refreshed branch suggestion of the current card', () => {
+    const state = fetchState(buildLink({ branchName: null }), {
+      suggestedBranchName: '7-old-name',
+    });
+
+    const nextState = reducer(state, {
+      type: ActionTypes.GITLAB_BRANCH_SUGGESTION_FETCH__SUCCESS,
+      payload: {
+        cardId: '10',
+        suggestedBranchName: '7-dev-00065',
+        defaultBranch: 'develop',
+      },
+    });
+
+    expect(nextState.suggestedBranchName).toBe('7-dev-00065');
+    expect(nextState.defaultBranch).toBe('develop');
+  });
+
+  test('ignores a branch suggestion of another card and keeps it on failure', () => {
+    const state = fetchState(buildLink({ branchName: null }), {
+      suggestedBranchName: '7-old-name',
+    });
+
+    const otherCardState = reducer(state, {
+      type: ActionTypes.GITLAB_BRANCH_SUGGESTION_FETCH__SUCCESS,
+      payload: {
+        cardId: '11',
+        suggestedBranchName: '9-other',
+        defaultBranch: 'develop',
+      },
+    });
+
+    const failedState = reducer(state, {
+      type: ActionTypes.GITLAB_BRANCH_SUGGESTION_FETCH__FAILURE,
+      payload: {
+        cardId: '10',
+        error: new Error('Network'),
+      },
+    });
+
+    expect(otherCardState).toBe(state);
+    expect(failedState).toBe(state);
+  });
 });

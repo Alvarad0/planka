@@ -314,6 +314,35 @@ export function* fetchGitlabCommitsInCurrentCard() {
   yield call(fetchGitlabCommits, cardId);
 }
 
+// Refreshes the prefilled values of the "Create branch" form, which depend on card data (e.g. the
+// "ID" custom field) that may have changed since the GitLab section was fetched
+export function* fetchGitlabBranchSuggestion(cardId) {
+  yield put(actions.fetchGitlabBranchSuggestion(cardId));
+
+  let suggestedBranchName;
+  let defaultBranch;
+  try {
+    ({
+      item: { suggestedBranchName, defaultBranch },
+    } = yield call(request, api.getGitlabBranchSuggestionForCard, cardId));
+  } catch (error) {
+    // The current suggestion is kept
+    console.warn('Failed to refresh the GitLab branch suggestion', error); // eslint-disable-line no-console
+    yield put(actions.fetchGitlabBranchSuggestion.failure(cardId, error));
+    return;
+  }
+
+  yield put(
+    actions.fetchGitlabBranchSuggestion.success(cardId, suggestedBranchName, defaultBranch),
+  );
+}
+
+export function* fetchGitlabBranchSuggestionInCurrentCard() {
+  const { cardId } = yield select(selectors.selectPath);
+
+  yield call(fetchGitlabBranchSuggestion, cardId);
+}
+
 export default {
   fetchGitlabCardLink,
   fetchGitlabCardLinkInCurrentCard,
@@ -334,4 +363,6 @@ export default {
   createGitlabMergeRequestForCurrentCard,
   fetchGitlabCommits,
   fetchGitlabCommitsInCurrentCard,
+  fetchGitlabBranchSuggestion,
+  fetchGitlabBranchSuggestionInCurrentCard,
 };

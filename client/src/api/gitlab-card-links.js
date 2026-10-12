@@ -92,6 +92,9 @@ const getGitlabCommitsForCard = (cardId, headers) =>
     items: body.items.map(transformGitlabCommit),
   }));
 
+const getGitlabBranchSuggestionForCard = (cardId, headers) =>
+  socket.get(`/cards/${cardId}/gitlab-branch-suggestion`, undefined, headers);
+
 /* Event handlers */
 
 const makeHandleGitlabCardLinkCreate = (next) => (body) => {
@@ -111,6 +114,7 @@ export default {
   createGitlabBranchForCard,
   createGitlabMergeRequestForCard,
   getGitlabCommitsForCard,
+  getGitlabBranchSuggestionForCard,
   makeHandleGitlabCardLinkCreate,
   makeHandleGitlabCardLinkUpdate,
   makeHandleGitlabCardLinkDelete,

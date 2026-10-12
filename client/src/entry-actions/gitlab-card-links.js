@@ -65,6 +65,11 @@ const fetchGitlabCommitsInCurrentCard = () => ({
   payload: {},
 });
 
+const fetchGitlabBranchSuggestionInCurrentCard = () => ({
+  type: EntryActionTypes.GITLAB_BRANCH_SUGGESTION_IN_CURRENT_CARD_FETCH,
+  payload: {},
+});
+
 export default {
   fetchGitlabCardLinkInCurrentCard,
   syncGitlabCardLinkInCurrentCard,
@@ -77,4 +82,5 @@ export default {
   createGitlabBranchForCurrentCard,
   createGitlabMergeRequestForCurrentCard,
   fetchGitlabCommitsInCurrentCard,
+  fetchGitlabBranchSuggestionInCurrentCard,
 };

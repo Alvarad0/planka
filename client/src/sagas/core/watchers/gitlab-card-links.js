@@ -38,5 +38,8 @@ export default function* gitlabCardLinksWatchers() {
     takeEvery(EntryActionTypes.GITLAB_COMMITS_IN_CURRENT_CARD_FETCH, () =>
       services.fetchGitlabCommitsInCurrentCard(),
     ),
+    takeEvery(EntryActionTypes.GITLAB_BRANCH_SUGGESTION_IN_CURRENT_CARD_FETCH, () =>
+      services.fetchGitlabBranchSuggestionInCurrentCard(),
+    ),
   ]);
 }

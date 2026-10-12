@@ -3,7 +3,7 @@
  * /cards/{id}/gitlab-branch:
  *   post:
  *     summary: Create GitLab branch for a card
- *     description: Creates a branch in the GitLab project of the card's linked issue and stores it on the link. The name defaults to `<issue IID>-<slug of the card name>` and the base branch to the default branch of the project's GitLab integration. If the branch already exists in GitLab, it is linked as is (`isExistingBranch`). Requires board editor permissions.
+ *     description: Creates a branch in the GitLab project of the card's linked issue and stores it on the link. The name defaults to `<issue IID>-<slug of the card's "ID" custom field, or of the card name when it is missing or empty>` and the base branch to the default branch of the project's GitLab integration. If the branch already exists in GitLab, it is linked as is (`isExistingBranch`). Requires board editor permissions.
  *     tags:
  *       - GitLab Card Links
  *     operationId: createCardGitlabBranch
@@ -185,7 +185,12 @@ module.exports = {
       throw Errors.CARD_ALREADY_HAS_BRANCH;
     }
 
-    const name = inputs.name || buildBranchName(gitlabCardLink.issueIid, card.name);
+    const name =
+      inputs.name ||
+      buildBranchName(
+        gitlabCardLink.issueIid,
+        await sails.helpers.gitlabCardLinks.getBranchNameSource(card),
+      );
 
     if (!validateBranchName(name)) {
       throw Errors.INVALID_BRANCH_NAME;

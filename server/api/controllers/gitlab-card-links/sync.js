@@ -188,7 +188,10 @@ module.exports = {
         isProjectMismatch: syncedGitlabCardLink.gitlabIntegrationId !== currentIntegrationId,
         suggestedBranchName: syncedGitlabCardLink.branchName
           ? null
-          : buildBranchName(syncedGitlabCardLink.issueIid, card.name),
+          : buildBranchName(
+              syncedGitlabCardLink.issueIid,
+              await sails.helpers.gitlabCardLinks.getBranchNameSource(card),
+            ),
         defaultBranch: gitlabIntegration ? gitlabIntegration.defaultBranch : null,
       },
     };

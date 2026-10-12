@@ -434,6 +434,16 @@ export default (state = initialState, { type, payload }) => {
         isFetchingCommits: false,
         commitsError: payload.error,
       };
+    case ActionTypes.GITLAB_BRANCH_SUGGESTION_FETCH__SUCCESS:
+      if (payload.cardId !== state.cardId) {
+        return state;
+      }
+
+      return {
+        ...state,
+        suggestedBranchName: payload.suggestedBranchName,
+        defaultBranch: payload.defaultBranch,
+      };
     default:
       return state;
   }

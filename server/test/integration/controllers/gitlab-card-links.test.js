@@ -1453,6 +1453,235 @@ describe('GitLab card links (controllers)', () => {
     });
   });
 
+  describe('branch name source ("ID" custom field)', () => {
+    let position = 65536;
+
+    const createGroup = (values) => {
+      position += 65536;
+
+      return CustomFieldGroup.create({ position, ...values }).fetch();
+    };
+
+    const createField = (values) => {
+      position += 65536;
+
+      return CustomField.create({ position, ...values }).fetch();
+    };
+
+    const setValue = (customFieldGroup, customField, content, cardId = card.id) =>
+      CustomFieldValue.qm.createOrUpdateOne({
+        cardId,
+        content,
+        customFieldGroupId: customFieldGroup.id,
+        customFieldId: customField.id,
+      });
+
+    const fetchSuggestedBranchName = async () => {
+      await createLink(card.id);
+      mockGetIssue(12);
+
+      const response = await send(api('get', `/api/cards/${card.id}/gitlab`));
+
+      expect(response.status).to.equal(200);
+
+      return response.body.included.suggestedBranchName;
+    };
+
+    afterEach(async () => {
+      await CustomFieldValue.destroy({});
+      await CustomField.destroy({});
+      await CustomFieldGroup.destroy({});
+      await BaseCustomFieldGroup.destroy({});
+    });
+
+    it('uses the "ID" field of a board group', async () => {
+      const group = await createGroup({ boardId: path.board.id, name: 'Properties' });
+      const field = await createField({ customFieldGroupId: group.id, name: 'ID' });
+      await setValue(group, field, '  DEV-00065 ');
+
+      expect(await fetchSuggestedBranchName()).to.equal('12-dev-00065');
+    });
+
+    it('uses the "ID" field of a card group', async () => {
+      const group = await createGroup({ cardId: card.id, name: 'Properties' });
+      const field = await createField({ customFieldGroupId: group.id, name: 'ID' });
+      await setValue(group, field, 'DEV-00066');
+
+      expect(await fetchSuggestedBranchName()).to.equal('12-dev-00066');
+    });
+
+    it('uses the "ID" field of a base group used by a board group', async () => {
+      const baseGroup = await BaseCustomFieldGroup.create({
+        projectId: path.project.id,
+        name: 'Base',
+      }).fetch();
+      const field = await createField({ baseCustomFieldGroupId: baseGroup.id, name: 'ID' });
+      const group = await createGroup({
+        boardId: path.board.id,
+        baseCustomFieldGroupId: baseGroup.id,
+      });
+      await setValue(group, field, 'DEV-00067');
+
+      expect(await fetchSuggestedBranchName()).to.equal('12-dev-00067');
+    });
+
+    it('matches the field name trimmed and case-insensitively', async () => {
+      const group = await createGroup({ boardId: path.board.id, name: 'Properties' });
+      const field = await createField({ customFieldGroupId: group.id, name: ' iD ' });
+      await setValue(group, field, 'DEV-00068');
+
+      expect(await fetchSuggestedBranchName()).to.equal('12-dev-00068');
+    });
+
+    it('prefers board groups over card groups', async () => {
+      const cardGroup = await createGroup({ cardId: card.id, name: 'Card' });
+      const cardField = await createField({ customFieldGroupId: cardGroup.id, name: 'ID' });
+      await setValue(cardGroup, cardField, 'CARD-1');
+
+      const boardGroup = await createGroup({ boardId: path.board.id, name: 'Board' });
+      const boardField = await createField({ customFieldGroupId: boardGroup.id, name: 'ID' });
+      await setValue(boardGroup, boardField, 'BOARD-1');
+
+      expect(await fetchSuggestedBranchName()).to.equal('12-board-1');
+    });
+
+    it('falls back to the card name when the value is empty or whitespace', async () => {
+      const group = await createGroup({ boardId: path.board.id, name: 'Properties' });
+      const field = await createField({ customFieldGroupId: group.id, name: 'ID' });
+      await setValue(group, field, '   ');
+
+      expect(await fetchSuggestedBranchName()).to.equal('12-implement-login');
+    });
+
+    it('falls back to the card name when the field has no value for the card', async () => {
+      const group = await createGroup({ boardId: path.board.id, name: 'Properties' });
+      const field = await createField({ customFieldGroupId: group.id, name: 'ID' });
+      const otherCard = await createCard(path, { name: 'Other' });
+      await setValue(group, field, 'DEV-99999', otherCard.id);
+
+      expect(await fetchSuggestedBranchName()).to.equal('12-implement-login');
+    });
+
+    it('falls back to the card name without an "ID" field', async () => {
+      const group = await createGroup({ boardId: path.board.id, name: 'Properties' });
+      const field = await createField({ customFieldGroupId: group.id, name: 'Identifier' });
+      await setValue(group, field, 'DEV-00069');
+
+      expect(await fetchSuggestedBranchName()).to.equal('12-implement-login');
+    });
+
+    it('ignores "ID" fields of other cards\' groups', async () => {
+      const otherCard = await createCard(path, { name: 'Other' });
+      const group = await createGroup({ cardId: otherCard.id, name: 'Properties' });
+      const field = await createField({ customFieldGroupId: group.id, name: 'ID' });
+      await setValue(group, field, 'DEV-00070', otherCard.id);
+
+      expect(await fetchSuggestedBranchName()).to.equal('12-implement-login');
+    });
+
+    it('uses the "ID" field for the default name of a new branch', async () => {
+      const group = await createGroup({ boardId: path.board.id, name: 'Properties' });
+      const field = await createField({ customFieldGroupId: group.id, name: 'ID' });
+      await setValue(group, field, 'DEV-00065');
+      await createLink(card.id);
+
+      let sentBody;
+      mockCreateBranch((body) => {
+        sentBody = body;
+      });
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-branch`));
+
+      expect(response.status).to.equal(200);
+      expect(sentBody).to.deep.equal({ branch: '12-dev-00065', ref: 'main' });
+      expect(response.body.item.branchName).to.equal('12-dev-00065');
+    });
+
+    it('uses the "ID" field in the suggestion returned when creating an issue', async () => {
+      const group = await createGroup({ boardId: path.board.id, name: 'Properties' });
+      const field = await createField({ customFieldGroupId: group.id, name: 'ID' });
+      await setValue(group, field, 'DEV-00065');
+      mockCreateIssue(() => {});
+
+      const response = await send(api('post', `/api/cards/${card.id}/gitlab-issue`));
+
+      expect(response.status).to.equal(200);
+      expect(response.body.included.suggestedBranchName).to.equal('12-dev-00065');
+    });
+
+    // No GitLab interceptor is registered and net connect is disabled, so any GitLab call fails
+    describe('branch suggestion endpoint', () => {
+      const getSuggestion = (apiKey) =>
+        send(api('get', `/api/cards/${card.id}/gitlab-branch-suggestion`, apiKey));
+
+      it('returns the fresh suggestion and default branch without calling GitLab', async () => {
+        await createLink(card.id);
+
+        let response = await getSuggestion();
+
+        expect(response.status).to.equal(200);
+        expect(response.body).to.deep.equal({
+          item: { suggestedBranchName: '12-implement-login', defaultBranch: 'main' },
+        });
+
+        const group = await createGroup({ boardId: path.board.id, name: 'Properties' });
+        const field = await createField({ customFieldGroupId: group.id, name: 'ID' });
+        await setValue(group, field, 'DEV-00065');
+
+        response = await getSuggestion();
+
+        expect(response.status).to.equal(200);
+        expect(response.body.item.suggestedBranchName).to.equal('12-dev-00065');
+      });
+
+      it('returns no suggested name when the card already has a branch', async () => {
+        await createLink(card.id, { branchName: 'existing' });
+
+        const response = await getSuggestion();
+
+        expect(response.status).to.equal(200);
+        expect(response.body.item).to.deep.equal({
+          suggestedBranchName: null,
+          defaultBranch: 'main',
+        });
+      });
+
+      it('answers 403 to viewers and 404 to non-members', async () => {
+        await createLink(card.id);
+
+        expect((await getSuggestion(VIEWER_API_KEY)).status).to.equal(403);
+        expect((await getSuggestion(OUTSIDER_API_KEY)).status).to.equal(404);
+      });
+
+      it('answers 422 when the card is not linked', async () => {
+        const response = await getSuggestion();
+
+        expect(response.status).to.equal(422);
+        expect(response.body.message).to.equal('Card is not linked to a GitLab issue');
+      });
+
+      it('answers 422 when the card was moved to a project linked to another GitLab project', async () => {
+        await createLink(card.id);
+
+        const otherPath = await createProjectWithBoard('CRM');
+        await createIntegration(otherPath.project, 77);
+        await addBoardMember(otherPath, editor, BoardMembership.Roles.EDITOR);
+
+        await Card.updateOne(card.id).set({
+          boardId: otherPath.board.id,
+          listId: otherPath.list.id,
+        });
+
+        const response = await getSuggestion();
+
+        expect(response.status).to.equal(422);
+        expect(response.body.message).to.equal(
+          'Card was moved to a project linked to another GitLab project',
+        );
+      });
+    });
+  });
+
   // Nested so it runs after the other groups (Mocha runs a level's own tests before its suites)
   describe('secrets', () => {
     it('never returns the GitLab token in any response', () => {

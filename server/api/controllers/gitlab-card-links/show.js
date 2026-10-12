@@ -92,7 +92,7 @@
  *                     suggestedBranchName:
  *                       type: string
  *                       nullable: true
- *                       description: Branch name suggested for the card (`<issue IID>-<slug of the card name>`), set only when the card is linked and has no branch yet
+ *                       description: Branch name suggested for the card (`<issue IID>-<slug of the card's "ID" custom field, or of the card name when it is missing or empty>`), set only when the card is linked and has no branch yet
  *                       example: 12-implement-login
  *                     defaultBranch:
  *                       type: string
@@ -174,7 +174,10 @@ module.exports = {
     included.isProjectMismatch = gitlabCardLink.gitlabIntegrationId !== currentIntegrationId;
 
     if (!gitlabCardLink.branchName) {
-      included.suggestedBranchName = buildBranchName(gitlabCardLink.issueIid, card.name);
+      included.suggestedBranchName = buildBranchName(
+        gitlabCardLink.issueIid,
+        await sails.helpers.gitlabCardLinks.getBranchNameSource(card),
+      );
     }
 
     let nextGitlabCardLink = gitlabCardLink;

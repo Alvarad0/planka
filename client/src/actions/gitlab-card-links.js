@@ -281,6 +281,30 @@ fetchGitlabCommits.failure = (cardId, error) => ({
   },
 });
 
+const fetchGitlabBranchSuggestion = (cardId) => ({
+  type: ActionTypes.GITLAB_BRANCH_SUGGESTION_FETCH,
+  payload: {
+    cardId,
+  },
+});
+
+fetchGitlabBranchSuggestion.success = (cardId, suggestedBranchName, defaultBranch) => ({
+  type: ActionTypes.GITLAB_BRANCH_SUGGESTION_FETCH__SUCCESS,
+  payload: {
+    cardId,
+    suggestedBranchName,
+    defaultBranch,
+  },
+});
+
+fetchGitlabBranchSuggestion.failure = (cardId, error) => ({
+  type: ActionTypes.GITLAB_BRANCH_SUGGESTION_FETCH__FAILURE,
+  payload: {
+    cardId,
+    error,
+  },
+});
+
 export default {
   fetchGitlabCardLink,
   syncGitlabCardLink,
@@ -293,4 +317,5 @@ export default {
   createGitlabBranchForCard,
   createGitlabMergeRequestForCard,
   fetchGitlabCommits,
+  fetchGitlabBranchSuggestion,
 };
