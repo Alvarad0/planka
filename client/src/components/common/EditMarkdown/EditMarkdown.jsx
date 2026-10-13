@@ -17,7 +17,7 @@ import MarkdownEditor from '../MarkdownEditor';
 
 import styles from './EditMarkdown.module.scss';
 
-const MAX_LENGTH = 1048576;
+const MAX_LENGTH = 104857600;
 
 const EditMarkdown = React.memo(
   ({ defaultValue, draftValue, onUpdate, onClose, onImageUpload }) => {
@@ -105,7 +105,7 @@ const EditMarkdown = React.memo(
               content={
                 isExceeded
                   ? t('common.contentExceedsLimit', {
-                      limit: '1MB',
+                      limit: '100MB',
                     })
                   : t('action.save')
               }
