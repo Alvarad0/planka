@@ -2,8 +2,8 @@ const { URL } = require('url');
 
 const ALLOWED_PROTOCOLS = ['http:', 'https:'];
 
-// GITLAB_URL is operator configuration, never user input. Normalizing it once at startup keeps
-// every API call pointed at a single, known host (no user-controlled URLs, no SSRF surface).
+// The GitLab URL is operator configuration (GITLAB_URL, or the admin-only setting in the UI), never
+// input of regular users. Normalizing it keeps every API call pointed at a single, known host.
 const normalizeGitlabUrl = (value) => {
   if (!value || !value.trim()) {
     return null;

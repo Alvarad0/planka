@@ -1,23 +1,21 @@
 const { createGitlabClient } = require('../../../utils/gitlab-client');
 
 module.exports = {
-  sync: true,
-
   exits: {
     gitlabNotConfigured: {},
   },
 
-  fn() {
-    const { gitlabUrl, gitlabToken, outgoingProxy } = sails.config.custom;
+  async fn() {
+    const { url, token } = await sails.helpers.gitlab.getSettings();
 
-    if (!gitlabUrl || !gitlabToken) {
+    if (!url || !token) {
       throw 'gitlabNotConfigured';
     }
 
     return createGitlabClient({
-      baseUrl: gitlabUrl,
-      token: gitlabToken,
-      proxyUrl: outgoingProxy,
+      baseUrl: url,
+      token,
+      proxyUrl: sails.config.custom.outgoingProxy,
     });
   },
 };

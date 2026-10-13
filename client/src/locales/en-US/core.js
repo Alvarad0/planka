@@ -158,6 +158,7 @@ export default {
       completedList: 'Completed list',
       confirmCodesSaved: 'I have saved these codes in a safe place.',
       confirmPassword: 'Confirm password',
+      connectedToGitlabAs: 'Connected to GitLab as {{username}}',
       connectionOk: 'Connection OK — {{project}}',
       contentExceedsLimit: 'Content exceeds {{limit}}',
       contentOfThisAttachmentIsTooBigToDisplay: 'Content of this attachment is too big to display.',
@@ -320,11 +321,16 @@ export default {
       fullKeyIsHiddenForSecurityReasons:
         'The full key is hidden for security reasons. Regenerate it to create a new one.',
       general: 'General',
+      gitlabAccessTokenHint:
+        'Project, group or personal access token with the api scope. It is stored encrypted and never shown again.',
+      gitlabApiNotFoundAtThisUrl: 'GitLab API not found at this URL',
       gitlabBranchIsAlreadyLinkedToAnotherCard:
         'This GitLab branch is already linked to another card',
       gitlabBranchNotFound: 'GitLab branch not found',
       gitlabIntegrationAlreadyExists: 'This project is already linked to GitLab',
       gitlabIntegrationNotFound: 'GitLab integration not found',
+      gitlabIsConfiguredViaEnvironmentVariables:
+        'GitLab is configured via environment variables on the server, so these settings cannot be changed here.',
       gitlabIsNotConfigured: 'GitLab is not configured',
       gitlabIsUnavailable: 'GitLab is unavailable',
       gitlabMergeRequestClosed: 'Closed',
@@ -342,6 +348,7 @@ export default {
       gitlabRequestFailed: 'GitLab request failed',
       gitlabTokenIsInvalidOrExpired: 'GitLab token is invalid or expired',
       gitlabTokenLacksPermission: 'GitLab token lacks permission',
+      gitlabUrl: 'GitLab URL',
       gitlab_title: 'GitLab',
       gradients: 'Gradients',
       grid: 'Grid',
@@ -355,6 +362,7 @@ export default {
       information: 'Information',
       invalidBaseBranchName: 'Invalid base branch name',
       invalidBranchName: 'Invalid branch name',
+      invalidGitlabUrl: 'Invalid GitLab URL',
       invalidCurrentPassword: 'Invalid current password',
       kanban: 'Kanban',
       labels: 'Labels',
@@ -478,6 +486,7 @@ export default {
         'There is no preview available for this attachment.',
       time: 'Time',
       title: 'Title',
+      tokenIsSet: 'Token is set',
       trash: 'Trash',
       trashHasBeenSuccessfullyEmptied: 'Trash has been successfully emptied.',
       turnOffRecentCardHighlighting: 'Turn off recent card highlighting',

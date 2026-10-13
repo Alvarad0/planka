@@ -104,7 +104,7 @@ module.exports = {
         };
       }
 
-      const client = sails.helpers.gitlab.makeClient();
+      const client = await sails.helpers.gitlab.makeClient();
 
       commits = await client.listCommits(linkIntegration.gitlabProjectId, {
         from: linkIntegration.defaultBranch,

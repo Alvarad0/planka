@@ -13,8 +13,11 @@ const updateConfig = (data, headers) => socket.patch('/config', data, headers);
 
 const testSmtpConfig = (headers) => socket.post('/config/test-smtp', undefined, headers);
 
+const testGitlabConfig = (data, headers) => socket.post('/config/test-gitlab', data, headers);
+
 export default {
   getConfig,
   updateConfig,
   testSmtpConfig,
+  testGitlabConfig,
 };

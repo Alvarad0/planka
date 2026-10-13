@@ -316,6 +316,21 @@ const createGitlabClient = ({
   };
 
   return {
+    // The user the token belongs to (a bot user for project/group access tokens); used to test
+    // the connection settings
+    async getCurrentUser() {
+      const user = await request('GET', '/user');
+
+      if (!user || typeof user.username !== 'string') {
+        throw new GitlabError(ErrorCodes.UNAVAILABLE, 'GitLab returned an invalid response');
+      }
+
+      return {
+        username: user.username,
+        name: typeof user.name === 'string' ? user.name : null,
+      };
+    },
+
     async getProject(projectRef) {
       const project = await request('GET', `/projects/${encodeProjectRef(projectRef)}`);
 

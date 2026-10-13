@@ -178,7 +178,7 @@ module.exports = {
     let gitlabProject;
     let notFoundError = Errors.GITLAB_PROJECT_NOT_FOUND;
     try {
-      const client = sails.helpers.gitlab.makeClient();
+      const client = await sails.helpers.gitlab.makeClient();
 
       gitlabProject = await client.getProject(inputs.gitlabProject);
 

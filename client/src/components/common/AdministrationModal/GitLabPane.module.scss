@@ -1,0 +1,38 @@
+:global(#app) {
+  .controls {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .error {
+    color: #9f3a38;
+    font-size: 12px;
+    margin: -4px 0 8px;
+  }
+
+  .field {
+    margin-bottom: 8px;
+  }
+
+  .hint {
+    color: #6b808c;
+    font-size: 12px;
+    margin: -4px 0 12px;
+  }
+
+  .message {
+    margin-top: 12px;
+  }
+
+  .text {
+    color: #444444;
+    font-size: 12px;
+    font-weight: bold;
+    padding-bottom: 6px;
+  }
+
+  .wrapper {
+    border: none;
+    box-shadow: none;
+  }
+}

@@ -16,9 +16,9 @@ const NOT_CONFIGURED_CODE = 'gitlabNotConfigured';
 
 // Exits of a nested helper reach callers of this helper wrapped as internal errors, so the
 // "not configured" exit is converted into a plain error the GitLab error mapping understands
-const makeClient = () => {
+const makeClient = async () => {
   try {
-    return sails.helpers.gitlab.makeClient();
+    return await sails.helpers.gitlab.makeClient();
   } catch (error) {
     if (error.code === NOT_CONFIGURED_CODE) {
       const notConfiguredError = new Error('GitLab is not configured');
@@ -58,7 +58,7 @@ module.exports = {
       return null;
     }
 
-    const client = makeClient();
+    const client = await makeClient();
     const summary = await fetchSummary(client, linkIntegration, record);
 
     return sails.helpers.gitlabCardLinks.updateOne.with({

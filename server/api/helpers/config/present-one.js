@@ -14,14 +14,34 @@ module.exports = {
   },
 
   fn(inputs) {
+    // The GitLab token (stored encrypted) is never presented, only whether it is set
+    const isGitlabManagedByEnv = sails.helpers.gitlab.isManagedByEnv();
+
+    const gitlabValues = isGitlabManagedByEnv
+      ? {
+          gitlabUrl: sails.config.custom.gitlabUrl,
+          isGitlabTokenSet: true,
+          isGitlabManagedByEnv,
+        }
+      : {
+          gitlabUrl: inputs.record.gitlabUrl,
+          isGitlabTokenSet: !!inputs.record.gitlabToken,
+          isGitlabManagedByEnv,
+        };
+
+    const record = {
+      ..._.omit(inputs.record, 'gitlabToken'),
+      ...gitlabValues,
+    };
+
     if (sails.config.custom.smtpHost) {
-      return _.omit(inputs.record, Config.SMTP_FIELD_NAMES);
+      return _.omit(record, Config.SMTP_FIELD_NAMES);
     }
 
-    if (inputs.record.smtpPassword) {
-      return _.omit(inputs.record, 'smtpPassword');
+    if (record.smtpPassword) {
+      return _.omit(record, 'smtpPassword');
     }
 
-    return inputs.record;
+    return record;
   },
 };

@@ -191,7 +191,7 @@ module.exports = {
 
       // Foreign keys cascade, so a missing integration is not expected; it is reported as stale
       if (linkIntegration) {
-        const client = sails.helpers.gitlab.makeClient();
+        const client = await sails.helpers.gitlab.makeClient();
 
         summary = await fetchSummary(client, linkIntegration, gitlabCardLink);
       }

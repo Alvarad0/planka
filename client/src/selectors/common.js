@@ -24,6 +24,9 @@ export const selectProjectCreateForm = ({ ui: { projectCreateForm } }) => projec
 
 export const selectSmtpTestState = ({ ui: { smtpTestState } }) => smtpTestState;
 
+export const selectGitlabConfigTestState = ({ ui: { gitlabConfigTestState } }) =>
+  gitlabConfigTestState;
+
 export default {
   selectIsSocketDisconnected,
   selectIsInitializing,
@@ -35,4 +38,5 @@ export default {
   selectUserCreateForm,
   selectProjectCreateForm,
   selectSmtpTestState,
+  selectGitlabConfigTestState,
 };

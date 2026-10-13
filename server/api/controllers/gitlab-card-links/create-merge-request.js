@@ -142,7 +142,7 @@ module.exports = {
 
     let client;
     try {
-      client = sails.helpers.gitlab.makeClient();
+      client = await sails.helpers.gitlab.makeClient();
     } catch (error) {
       throw mapError(error);
     }

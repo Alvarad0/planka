@@ -129,7 +129,7 @@ module.exports = {
 
     let gitlabIssue;
     try {
-      const client = sails.helpers.gitlab.makeClient();
+      const client = await sails.helpers.gitlab.makeClient();
 
       gitlabIssue = await client.createIssue(gitlabIntegration.gitlabProjectId, {
         title: card.name,

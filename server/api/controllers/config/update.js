@@ -64,6 +64,18 @@
  *                 nullable: true
  *                 description: Default "from" used for outgoing SMTP emails
  *                 example: no-reply@example.com
+ *               gitlabUrl:
+ *                 type: string
+ *                 maxLength: 2048
+ *                 nullable: true
+ *                 description: Base URL of the GitLab instance (http or https, without credentials or query). Empty or null clears it. Not available when GitLab is configured via environment variables.
+ *                 example: https://gitlab.example.com
+ *               gitlabToken:
+ *                 type: string
+ *                 maxLength: 1024
+ *                 nullable: true
+ *                 description: GitLab access token, stored encrypted and never returned. Empty or null clears it, omitted keeps it. Not available when GitLab is configured via environment variables.
+ *                 example: glpat-xxxxxxxxxxxxxxxxxxxx
  *     responses:
  *       200:
  *         description: Configuration updated successfully
@@ -76,7 +88,24 @@
  *               properties:
  *                 item:
  *                   $ref: '#/components/schemas/Config'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       422:
+ *         $ref: '#/components/responses/UnprocessableEntity'
  */
+
+const { normalizeGitlabUrl } = require('../../../utils/gitlab-url');
+
+const Errors = {
+  GITLAB_NOT_AVAILABLE: {
+    gitlabNotAvailable: 'GitLab is configured via environment variables',
+  },
+  INVALID_GITLAB_URL: {
+    invalidGitlabUrl: 'Invalid GitLab URL',
+  },
+};
 
 module.exports = {
   inputs: {
@@ -122,6 +151,25 @@ module.exports = {
       maxLength: 256,
       allowNull: true,
     },
+    gitlabUrl: {
+      type: 'string',
+      maxLength: 2048,
+      allowNull: true,
+    },
+    gitlabToken: {
+      type: 'string',
+      maxLength: 1024,
+      allowNull: true,
+    },
+  },
+
+  exits: {
+    gitlabNotAvailable: {
+      responseType: 'forbidden',
+    },
+    invalidGitlabUrl: {
+      responseType: 'unprocessableEntity',
+    },
   },
 
   async fn(inputs) {
@@ -137,6 +185,27 @@ module.exports = {
       'smtpPassword',
       'smtpFrom',
     ]);
+
+    if (!_.isUndefined(inputs.gitlabUrl) || !_.isUndefined(inputs.gitlabToken)) {
+      if (sails.helpers.gitlab.isManagedByEnv()) {
+        throw Errors.GITLAB_NOT_AVAILABLE;
+      }
+
+      if (!_.isUndefined(inputs.gitlabUrl)) {
+        try {
+          values.gitlabUrl = normalizeGitlabUrl(inputs.gitlabUrl);
+        } catch (error) {
+          throw Errors.INVALID_GITLAB_URL;
+        }
+      }
+
+      // Write-only: an empty value clears the token, an omitted one keeps it
+      if (!_.isUndefined(inputs.gitlabToken)) {
+        const gitlabToken = inputs.gitlabToken && inputs.gitlabToken.trim();
+
+        values.gitlabToken = gitlabToken ? sails.helpers.gitlab.encryptToken(gitlabToken) : null;
+      }
+    }
 
     const config = await sails.helpers.config.updateMain.with({
       values,

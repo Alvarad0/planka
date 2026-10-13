@@ -59,6 +59,42 @@ describe('GitLab client', () => {
     });
   });
 
+  describe('getCurrentUser', () => {
+    it('fetches the user the token belongs to and presents only the needed fields', async () => {
+      gitlab
+        .intercept({
+          path: '/api/v4/user',
+          method: 'GET',
+          headers: { 'private-token': TOKEN },
+        })
+        .reply(200, {
+          id: 9,
+          username: 'project_42_bot',
+          name: 'Planka Bot',
+          email: 'bot@gitlab.test',
+        });
+
+      expect(await client.getCurrentUser()).to.deep.equal({
+        username: 'project_42_bot',
+        name: 'Planka Bot',
+      });
+    });
+
+    it('maps a rejected token to an unauthorized error', async () => {
+      gitlab
+        .intercept({ path: '/api/v4/user', method: 'GET' })
+        .reply(401, { message: `401 Unauthorized ${TOKEN}` });
+
+      await expectGitlabError(client.getCurrentUser(), ErrorCodes.UNAUTHORIZED);
+    });
+
+    it('rejects a response without a username', async () => {
+      gitlab.intercept({ path: '/api/v4/user', method: 'GET' }).reply(200, { id: 9 });
+
+      await expectGitlabError(client.getCurrentUser(), ErrorCodes.UNAVAILABLE);
+    });
+  });
+
   describe('getProject', () => {
     it('fetches a project by numeric ID and presents only the needed fields', async () => {
       gitlab

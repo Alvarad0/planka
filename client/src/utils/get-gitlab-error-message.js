@@ -8,6 +8,10 @@ const ERROR_MESSAGE_KEYS = {
   'GitLab issue not found': 'common.gitlabIssueNotFound',
   'GitLab is unavailable': 'common.gitlabIsUnavailable',
   'GitLab request failed': 'common.gitlabRequestFailed',
+  'GitLab API not found at this URL': 'common.gitlabApiNotFoundAtThisUrl',
+  'GitLab is configured via environment variables':
+    'common.gitlabIsConfiguredViaEnvironmentVariables',
+  'Invalid GitLab URL': 'common.invalidGitlabUrl',
   'GitLab integration already exists': 'common.gitlabIntegrationAlreadyExists',
   'GitLab integration not found': 'common.gitlabIntegrationNotFound',
   'Default branch must be present': 'common.defaultBranchMustBePresent',

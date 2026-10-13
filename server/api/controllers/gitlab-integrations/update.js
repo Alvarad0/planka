@@ -195,9 +195,9 @@ module.exports = {
 
     if (inputs.defaultBranch && inputs.defaultBranch !== gitlabIntegration.defaultBranch) {
       try {
-        await sails.helpers.gitlab
-          .makeClient()
-          .getBranch(gitlabIntegration.gitlabProjectId, inputs.defaultBranch);
+        const client = await sails.helpers.gitlab.makeClient();
+
+        await client.getBranch(gitlabIntegration.gitlabProjectId, inputs.defaultBranch);
       } catch (error) {
         throw mapGitlabError(error, {
           notFoundError: Errors.GITLAB_BRANCH_NOT_FOUND,

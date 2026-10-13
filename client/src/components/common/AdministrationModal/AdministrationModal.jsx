@@ -14,6 +14,7 @@ import entryActions from '../../../entry-actions';
 import { useClosableModal } from '../../../hooks';
 import UsersPane from './UsersPane';
 import SmtpPane from './SmtpPane';
+import GitLabPane from './GitLabPane';
 import WebhooksPane from './WebhooksPane';
 
 import styles from './AdministrationModal.module.scss';
@@ -51,6 +52,12 @@ const AdministrationModal = React.memo(() => {
       render: () => <SmtpPane />,
     });
   }
+  panes.push({
+    menuItem: t('common.gitlab', {
+      context: 'title',
+    }),
+    render: () => <GitLabPane />,
+  });
   panes.push({
     menuItem: t('common.webhooks', {
       context: 'title',

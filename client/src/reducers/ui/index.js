@@ -9,6 +9,7 @@ import authenticateForm from './authenticate-form';
 import userCreateForm from './user-create-form';
 import projectCreateForm from './project-create-form';
 import smtpTestState from './smtp-test-state';
+import gitlabConfigTestState from './gitlab-config-test-state';
 import userTrustedDevicesState from './user-trusted-devices-state';
 import gitlabIntegrationState from './gitlab-integration-state';
 import gitlabCardLinkState from './gitlab-card-link-state';
@@ -19,6 +20,7 @@ export default combineReducers({
   userCreateForm,
   projectCreateForm,
   smtpTestState,
+  gitlabConfigTestState,
   userTrustedDevicesState,
   gitlabIntegrationState,
   gitlabCardLinkState,

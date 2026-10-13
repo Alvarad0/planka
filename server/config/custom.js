@@ -89,7 +89,8 @@ module.exports.custom = {
 
   gravatarBaseUrl: process.env.GRAVATAR_BASE_URL,
 
-  // GitLab Bridge. The token must never be presented to clients or written to logs.
+  // GitLab Bridge. The token must never be presented to clients or written to logs. When both are
+  // set they override the settings saved from the UI (see helpers/gitlab/get-settings.js).
   gitlabUrl: normalizeGitlabUrl(process.env.GITLAB_URL),
   gitlabToken: process.env.GITLAB_TOKEN && process.env.GITLAB_TOKEN.trim(),
   // Periodic sync (gitlab-sync hook): every N minutes (0 disables it), re-syncs links not synced

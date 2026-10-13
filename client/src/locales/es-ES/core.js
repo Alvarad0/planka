@@ -157,6 +157,7 @@ export default {
       commitsWithCount_one: '{{count}} commit',
       commitsWithCount_other: '{{count}} commits',
       completedList: 'Lista de completadas',
+      connectedToGitlabAs: 'Conectado a GitLab como {{username}}',
       connectionOk: 'Conexión correcta — {{project}}',
       contentExceedsLimit: 'El contenido excede {{limit}}',
       contentOfThisAttachmentIsTooBigToDisplay:
@@ -278,11 +279,16 @@ export default {
       fullKeyIsHiddenForSecurityReasons:
         'La clave completa está oculta por razones de seguridad. Regénérala para crear una nueva.',
       general: 'General',
+      gitlabAccessTokenHint:
+        'Token de acceso de proyecto, de grupo o personal con el alcance api. Se guarda cifrado y no se vuelve a mostrar.',
+      gitlabApiNotFoundAtThisUrl: 'No se encontró la API de GitLab en esta URL',
       gitlabBranchIsAlreadyLinkedToAnotherCard:
         'Esta rama de GitLab ya está vinculada a otra tarjeta',
       gitlabBranchNotFound: 'Rama de GitLab no encontrada',
       gitlabIntegrationAlreadyExists: 'Este proyecto ya está vinculado a GitLab',
       gitlabIntegrationNotFound: 'Integración de GitLab no encontrada',
+      gitlabIsConfiguredViaEnvironmentVariables:
+        'GitLab está configurado mediante variables de entorno en el servidor, por lo que estos ajustes no se pueden cambiar aquí.',
       gitlabIsNotConfigured: 'GitLab no está configurado',
       gitlabIsUnavailable: 'GitLab no está disponible',
       gitlabMergeRequestClosed: 'Cerrado',
@@ -300,6 +306,7 @@ export default {
       gitlabRequestFailed: 'La solicitud a GitLab ha fallado',
       gitlabTokenIsInvalidOrExpired: 'El token de GitLab no es válido o ha caducado',
       gitlabTokenLacksPermission: 'El token de GitLab no tiene permisos suficientes',
+      gitlabUrl: 'URL de GitLab',
       gitlab_title: 'GitLab',
       gradients: 'Degradados',
       grid: 'Cuadrícula',
@@ -313,6 +320,7 @@ export default {
       information: 'Información',
       invalidBaseBranchName: 'Nombre de rama base no válido',
       invalidBranchName: 'Nombre de rama no válido',
+      invalidGitlabUrl: 'URL de GitLab no válida',
       invalidCurrentPassword: 'Contraseña actual incorrecta',
       kanban: 'Kanban',
       labels: 'Etiquetas',
@@ -438,6 +446,7 @@ export default {
         'No hay vista previa disponible para este archivo adjunto.',
       time: 'Hora',
       title: 'Título',
+      tokenIsSet: 'El token está establecido',
       trash: 'Papelera',
       trashHasBeenSuccessfullyEmptied: 'La papelera se ha vaciado correctamente.',
       turnOffRecentCardHighlighting: 'Desactivar resaltado de tarjetas recientes',

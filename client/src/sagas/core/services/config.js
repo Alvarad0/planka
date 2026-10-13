@@ -42,8 +42,23 @@ export function* testSmtpConfig() {
   yield put(actions.testSmtpConfig.success(logs));
 }
 
+export function* testGitlabConfig(data) {
+  yield put(actions.testGitlabConfig(data));
+
+  let gitlabUser;
+  try {
+    ({ item: gitlabUser } = yield call(request, api.testGitlabConfig, data));
+  } catch (error) {
+    yield put(actions.testGitlabConfig.failure(error));
+    return;
+  }
+
+  yield put(actions.testGitlabConfig.success(gitlabUser));
+}
+
 export default {
   updateConfig,
   handleConfigUpdate,
   testSmtpConfig,
+  testGitlabConfig,
 };

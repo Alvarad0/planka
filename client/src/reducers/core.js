@@ -3,6 +3,8 @@
  * Licensed under the Fair Use License: https://github.com/plankanban/planka/blob/master/LICENSE.md
  */
 
+import omit from 'lodash/omit';
+
 import { LOCATION_CHANGE_HANDLE } from '../lib/redux-router';
 
 import ActionTypes from '../constants/ActionTypes';
@@ -140,7 +142,8 @@ export default (state = initialState, { type, payload }) => {
         ...state,
         config: {
           ...state.config,
-          ...payload.data,
+          // The GitLab token is write-only, the server answers with isGitlabTokenSet instead
+          ...omit(payload.data, 'gitlabToken'),
         },
       };
     case ActionTypes.CONFIG_UPDATE__SUCCESS:

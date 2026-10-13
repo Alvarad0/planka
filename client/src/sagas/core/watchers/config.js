@@ -17,5 +17,8 @@ export default function* configWatchers() {
       services.handleConfigUpdate(config),
     ),
     takeEvery(EntryActionTypes.SMTP_CONFIG_TEST, () => services.testSmtpConfig()),
+    takeEvery(EntryActionTypes.GITLAB_CONFIG_TEST, ({ payload: { data } }) =>
+      services.testGitlabConfig(data),
+    ),
   ]);
 }

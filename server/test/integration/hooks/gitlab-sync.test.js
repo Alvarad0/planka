@@ -177,7 +177,7 @@ describe('gitlab-sync hook', () => {
 
       const syncLink = recordingSyncLink();
 
-      expect(hook.isEnabled()).to.equal(false);
+      expect(await hook.isEnabled()).to.equal(false);
       expect(await hook.tick({ syncLink })).to.deep.equal({
         status: 'disabled',
       });
@@ -190,14 +190,14 @@ describe('gitlab-sync hook', () => {
       const syncLink = recordingSyncLink();
 
       sails.config.custom.gitlabToken = undefined;
-      expect(hook.isEnabled()).to.equal(false);
+      expect(await hook.isEnabled()).to.equal(false);
       expect(await hook.tick({ syncLink })).to.deep.equal({
         status: 'disabled',
       });
 
       sails.config.custom.gitlabToken = GITLAB_TOKEN;
       sails.config.custom.gitlabUrl = null;
-      expect(hook.isEnabled()).to.equal(false);
+      expect(await hook.isEnabled()).to.equal(false);
       expect(await hook.tick({ syncLink })).to.deep.equal({
         status: 'disabled',
       });
@@ -205,8 +205,33 @@ describe('gitlab-sync hook', () => {
       expect(syncLink.calls).to.deep.equal([]);
     });
 
-    it('is enabled with GitLab configured and a positive interval', () => {
-      expect(hook.isEnabled()).to.equal(true);
+    it('is enabled with GitLab configured and a positive interval', async () => {
+      expect(await hook.isEnabled()).to.equal(true);
+    });
+
+    it('picks up GitLab settings saved from the UI on each check', async () => {
+      Object.assign(sails.config.custom, {
+        gitlabUrl: null,
+        gitlabToken: undefined,
+      });
+
+      expect(await hook.isEnabled()).to.equal(false);
+
+      try {
+        await Config.qm.updateOneMain({
+          gitlabUrl: GITLAB_URL,
+          gitlabToken: sails.helpers.gitlab.encryptToken(GITLAB_TOKEN),
+        });
+
+        expect(await hook.isEnabled()).to.equal(true);
+      } finally {
+        await Config.qm.updateOneMain({
+          gitlabUrl: null,
+          gitlabToken: null,
+        });
+      }
+
+      expect(await hook.isEnabled()).to.equal(false);
     });
   });
 

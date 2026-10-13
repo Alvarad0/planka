@@ -35,10 +35,16 @@ module.exports = function defineGitlabSyncHook(sails) {
   let timeout = null;
   let isStopped = true;
 
-  const isEnabled = () => {
-    const { gitlabUrl, gitlabToken, gitlabSyncInterval } = sails.config.custom;
+  // Checked on every tick, not only at startup: GitLab can be configured (or removed) from the UI
+  // while Planka runs
+  const isEnabled = async () => {
+    if (!(sails.config.custom.gitlabSyncInterval > 0)) {
+      return false;
+    }
 
-    return !!gitlabUrl && !!gitlabToken && gitlabSyncInterval > 0;
+    const { url, token } = await sails.helpers.gitlab.getSettings();
+
+    return !!url && !!token;
   };
 
   const syncLinkById = (id) =>
@@ -167,7 +173,7 @@ module.exports = function defineGitlabSyncHook(sails) {
   // One tick. Callable directly (tests); `syncLink(id)` defaults to the coalesced requestSync,
   // so a periodic sync never runs concurrently with a webhook-triggered sync of the same link.
   const tick = async ({ syncLink = syncLinkById } = {}) => {
-    if (!isEnabled()) {
+    if (!(await isEnabled())) {
       return {
         status: 'disabled',
       };
@@ -217,9 +223,11 @@ module.exports = function defineGitlabSyncHook(sails) {
     }, sails.config.custom.gitlabSyncInterval * MINUTE);
   };
 
+  // The timer runs whenever the interval is positive; each tick does nothing while GitLab is not
+  // configured
   const start = () => {
-    if (!isEnabled()) {
-      sails.log.info('GitLab periodic sync is disabled (GitLab not configured or interval 0)');
+    if (!(sails.config.custom.gitlabSyncInterval > 0)) {
+      sails.log.info('GitLab periodic sync is disabled (interval 0)');
 
       return;
     }
@@ -252,6 +260,14 @@ module.exports = function defineGitlabSyncHook(sails) {
       (sails.config.custom.gitlabSyncConfigWarnings || []).forEach((warning) => {
         sails.log.warn(warning);
       });
+
+      // A lone GITLAB_URL or GITLAB_TOKEN does not manage GitLab: the UI settings are used instead
+      if (!!sails.config.custom.gitlabUrl !== !!sails.config.custom.gitlabToken) {
+        sails.log.warn(
+          'Only one of GITLAB_URL and GITLAB_TOKEN is set, ignoring it (both are required to ' +
+            'configure GitLab via env)',
+        );
+      }
 
       // Tests drive ticks directly; a timer would sync and prune behind their back
       if (sails.config.environment === 'test') {

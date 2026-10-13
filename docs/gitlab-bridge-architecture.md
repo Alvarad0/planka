@@ -10,7 +10,7 @@
 | Plugin system? | **No.** Neither server nor client has one. Everything is statically registered. |
 | Where does the Bridge live? | **Inside the Planka backend (Sails) as an isolated module**, plus a new section in the React client. A fork is unavoidable because the card UI must change. |
 | Source of truth | GitLab for code/MR/pipeline/issue. Planka stores **only the mapping** plus a small status snapshot for failure isolation. |
-| GitLab auth (MVP) | One **service token** (group/project access token) from env/Docker secret. **No tokens in the DB.** |
+| GitLab auth (MVP) | One **service token** (group/project access token), configured by an admin in **Administration → GitLab** (stored encrypted, AES-256-GCM) or via env/Docker secret, which takes precedence. |
 | Webhook auth | Public route + `X-Gitlab-Token` checked in constant time against a **hashed** per-integration secret. Idempotency via `Idempotency-Key` (fallback `X-Gitlab-Event-UUID`). Target GitLab: **17.5**. |
 | Relationships | **Nothing equivalent exists** except `Task.linkedCardId`. Reuse it for subtasks; add a new `card_relationship` table for dependencies/related. |
 | "Completed" | Driven by **list type `closed`** (already sets `card.isClosed`). Target lists are configured by ID, never by name. |
@@ -246,14 +246,19 @@ Nothing new. All non-webhook endpoints use the existing `is-authenticated` + `is
 
 | Option | Pros | Cons |
 |---|---|---|
-| **A. Service token (group/project access token) from env** ✅ | No secrets in DB; simple; Docker-secret friendly (`GITLAB_TOKEN__FILE`) | GitLab actions show as the bot user, not the developer |
-| B. Per-integration token in DB | Different token per project | Planka has **no encryption-at-rest helper**; `dataEncryptionKeys` in `config/models.js:108` uses a hard-coded default key, so it is not safe as-is |
+| **A. One service token (group/project access token), set in the UI or via env** ✅ | One place to configure; no server env editing needed; Docker-secret friendly (`GITLAB_TOKEN__FILE`) | GitLab actions show as the bot user, not the developer |
+| B. Per-integration token in DB | Different token per project | More secrets to manage and rotate; project managers would handle GitLab credentials |
 | C. Per-user OAuth (GitLab as OAuth provider) | True authorship, GitLab-side permissions | Token refresh, a per-user storage table and encryption: phase 8+ |
 
-**Decision for MVP: A.**
-- Config: `GITLAB_URL`, `GITLAB_TOKEN` / `GITLAB_TOKEN__FILE` (add it to `load_secret` in `server/start.sh`).
-- Scopes: `api` on the smallest group that contains the target projects.
-- `GITLAB_URL` is **global config, never user input**. This removes the SSRF surface of letting users type arbitrary URLs.
+**Decision for MVP: A.** The original "token only from env" decision was superseded so admins can configure GitLab without editing server env vars. It mirrors the SMTP settings:
+
+- **UI:** Administration → GitLab (admins only): GitLab URL, access token (write-only: the field stays empty and shows "Token is set"; typing replaces it, the clear icon removes it) and **Test connection**, which calls `GET /api/v4/user` with the values in the form (falling back to the saved token) and shows the GitLab username. Endpoints: `PATCH /api/config` (`gitlabUrl`, `gitlabToken`) and `POST /api/config/test-gitlab`.
+- **Env precedence:** when both `GITLAB_URL` and `GITLAB_TOKEN` / `GITLAB_TOKEN__FILE` are set they win, the UI is read-only with a notice (`isGitlabManagedByEnv`), `PATCH /api/config` rejects GitLab fields with 403 and Test connection only tests the env settings. A lone env var is ignored (warning on startup).
+- **Storage:** `config.gitlab_url` and `config.gitlab_token`. The token is encrypted at rest with AES-256-GCM (`server/utils/secret-box.js`, format `v1:<iv>:<tag>:<ciphertext>`, random 12-byte IV) with a key derived from `SECRET_KEY` by HKDF-SHA256 and the context `planka:gitlab-token`. If it cannot be decrypted (e.g. `SECRET_KEY` changed), it is treated as not set and a warning is logged; it must be saved again.
+- **Never exposed:** `config` responses, socket broadcasts and webhooks carry `gitlabUrl`, `isGitlabTokenSet` and `isGitlabManagedByEnv`, never the token or its ciphertext. The token is never logged.
+- **Resolution:** `sails.helpers.gitlab.getSettings()` is the single place that returns the effective `{ url, token, source: 'env' | 'db' | null }`. `makeClient` and the periodic sync read it on every call/tick (one primary-key query, no cache), so saved changes apply without a restart and across processes.
+- Scopes: `api` on the smallest group that contains the target projects (`read_api` is enough for Test connection only).
+- The GitLab URL is **admin/operator configuration, never input of regular users**, and is validated (http/https, no credentials, query or fragment). This keeps the SSRF surface limited to admins.
 
 ---
 
@@ -349,7 +354,7 @@ Rules:
 | R1 | **No usable test infrastructure** (test env uses `sails-disk`; the qm layer uses raw SQL and `next_id()`) | High | Phase 1 adds a Postgres-backed test setup (compose service `postgres-test`) before any feature |
 | R2 | Fork maintenance on Planka upgrades | Medium | Add-only migrations, isolated folders, short touch-point list (§8.2), `git diff upstream..gitlab-bridge` reviewed per release |
 | R3 | No job queue: lost webhooks, no retries | Medium | Idempotent handlers + periodic sync + manual sync endpoints |
-| R4 | No encryption at rest | Medium | MVP keeps **no GitLab token in DB**; webhook secret stored hashed |
+| R4 | No encryption at rest | Medium | The GitLab token saved from the UI is encrypted (AES-256-GCM, key derived from `SECRET_KEY`); webhook secret stored hashed |
 | R5 | GitLab reachability through Squid / reverse proxy | Medium | Test-connection endpoint in Phase 1; document network rules |
 | R6 | Automatic moves by a bot user | Low | Dedicated `boardUser` bot account, member (editor) of the relevant boards only |
 | R7 | Production 2.1.0 → 2.2.1 data migration **not rehearsed yet** (no prod access) | High | **Mandatory gate before cutover.** Rehearse with a real backup. |

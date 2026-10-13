@@ -24,8 +24,16 @@ const testSmtpConfig = () => ({
   payload: {},
 });
 
+const testGitlabConfig = (data) => ({
+  type: EntryActionTypes.GITLAB_CONFIG_TEST,
+  payload: {
+    data,
+  },
+});
+
 export default {
   updateConfig,
   handleConfigUpdate,
   testSmtpConfig,
+  testGitlabConfig,
 };

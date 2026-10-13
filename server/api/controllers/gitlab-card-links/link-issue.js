@@ -168,7 +168,7 @@ module.exports = {
 
     let gitlabIssue;
     try {
-      const client = sails.helpers.gitlab.makeClient();
+      const client = await sails.helpers.gitlab.makeClient();
 
       gitlabIssue = await client.getIssue(gitlabIntegration.gitlabProjectId, inputs.issueIid);
     } catch (error) {

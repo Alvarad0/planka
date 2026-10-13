@@ -52,8 +52,30 @@ testSmtpConfig.failure = (error) => ({
   },
 });
 
+const testGitlabConfig = (data) => ({
+  type: ActionTypes.GITLAB_CONFIG_TEST,
+  payload: {
+    data,
+  },
+});
+
+testGitlabConfig.success = (gitlabUser) => ({
+  type: ActionTypes.GITLAB_CONFIG_TEST__SUCCESS,
+  payload: {
+    gitlabUser,
+  },
+});
+
+testGitlabConfig.failure = (error) => ({
+  type: ActionTypes.GITLAB_CONFIG_TEST__FAILURE,
+  payload: {
+    error,
+  },
+});
+
 export default {
   updateConfig,
   handleConfigUpdate,
   testSmtpConfig,
+  testGitlabConfig,
 };

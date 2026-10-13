@@ -61,6 +61,19 @@
  *           nullable: true
  *           description: Default "from" used for outgoing SMTP emails
  *           example: no-reply@example.com
+ *         gitlabUrl:
+ *           type: string
+ *           nullable: true
+ *           description: Base URL of the GitLab instance used by the GitLab Bridge
+ *           example: https://gitlab.example.com
+ *         isGitlabTokenSet:
+ *           type: boolean
+ *           description: Whether a GitLab token is configured (the token itself is never returned)
+ *           example: true
+ *         isGitlabManagedByEnv:
+ *           type: boolean
+ *           description: Whether GitLab is configured via environment variables (read-only in the UI)
+ *           example: false
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -88,9 +101,13 @@ const SMTP_FIELD_NAMES = [
   'smtpFrom',
 ];
 
+// HKDF context of the key that encrypts the stored GitLab token (see utils/secret-box.js)
+const GITLAB_TOKEN_ENCRYPTION_CONTEXT = 'planka:gitlab-token';
+
 module.exports = {
   MAIN_ID,
   SMTP_FIELD_NAMES,
+  GITLAB_TOKEN_ENCRYPTION_CONTEXT,
 
   attributes: {
     //  ╔═╗╦═╗╦╔╦╗╦╔╦╗╦╦  ╦╔═╗╔═╗
@@ -136,6 +153,17 @@ module.exports = {
       type: 'string',
       allowNull: true,
       columnName: 'smtp_from',
+    },
+    gitlabUrl: {
+      type: 'string',
+      allowNull: true,
+      columnName: 'gitlab_url',
+    },
+    // Ciphertext only, never presented
+    gitlabToken: {
+      type: 'string',
+      allowNull: true,
+      columnName: 'gitlab_token',
     },
 
     //  ╔═╗╔╦╗╔╗ ╔═╗╔╦╗╔═╗
